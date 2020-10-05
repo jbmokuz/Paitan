@@ -1,114 +1,95 @@
 import unittest
 from database import *
-from functions import *
 
 
+class DisPlayer():
+    def __init__(self,name,id):
+        self.name = name
+        self.id = id
 
+    def __eq__(self, other):
+        return self.id == other.id
 
-class TestWaiting(unittest.TestCase):
+class TestLobby(unittest.TestCase):
     
     def setUp(self):
-        self.gi = GameInstance()
+        self.guildID = "TESTID"
+        self.gi = getGameInstance(self.guildID)
+        self.player1 = DisPlayer("Asan",1)
+        self.player2 = DisPlayer("Bsan",2)
+        self.player3 = DisPlayer("Csan",3)
+        self.player4 = DisPlayer("Dsan",4)
+        self.player5 = DisPlayer("Esan",5)
+        self.player6 = DisPlayer("Fsan",6)
+        self.player7 = DisPlayer("Gsan",7)
+        self.player8 = DisPlayer("Hsan",8)
+        self.player9 = DisPlayer("Isan",9)
+        self.player10 = DisPlayer("Jsan",10)
+        self.player11 = DisPlayer("Ksan",11)
+        self.player12 = DisPlayer("Lsan",12)
+        self.player13 = DisPlayer("Msan",13)        
 
     def testAddWaiting(self):
         self.gi.reset()
-        self.assertEqual([str(i) for i in self.gi.waiting], [])
-        self.assertEqual(self.gi.addWaiting("test"),0)
-        self.assertEqual([str(i) for i in self.gi.waiting], ["test"])
-        self.assertEqual(self.gi.addWaiting("test"),1)        
-        self.assertEqual([str(i) for i in self.gi.waiting], ["test"])
-        self.assertEqual(self.gi.addWaiting("test2"),0)
-        self.assertEqual([str(i) for i in self.gi.waiting], ["test","test2"])        
+        self.assertEqual(self.gi.waiting, [])
+        self.assertEqual(self.gi.addWaiting(self.player1),0)
+        self.assertEqual(self.gi.waiting, [self.player1])
+        self.assertEqual(self.gi.addWaiting(self.player1),1)        
+        self.assertEqual(self.gi.waiting, [self.player1])
+        self.assertEqual(self.gi.addWaiting(self.player2),0)
+        self.assertEqual(self.gi.waiting, [self.player1,self.player2])        
         
     def testRemoveWaiting(self):
         self.gi.reset()
         self.assertEqual(self.gi.waiting, [])
-        self.assertEqual(self.gi.addWaiting("test"),0)
-        self.assertEqual(self.gi.removeWaiting("test"),0)
+        self.assertEqual(self.gi.addWaiting(self.player1),0)
+        self.assertEqual(self.gi.removeWaiting(self.player1),0)
         self.assertEqual(self.gi.waiting, [])
-        self.gi.addWaiting("1")
-        self.gi.addWaiting("2")
-        self.assertEqual(self.gi.addWaiting("3"),0)
-        self.assertEqual(self.gi.addWaiting("3"),1)
-        self.gi.addWaiting("4")
-        self.assertEqual(self.gi.removeWaiting("2"),0)
-        self.assertEqual([str(i) for i in self.gi.waiting], ["1","3","4"])
-        self.assertEqual(self.gi.removeWaiting("3"),0)
-        self.assertEqual([str(i) for i in self.gi.waiting], ["1","4"])
-        self.assertEqual(self.gi.addWaiting("5"),0)
-        self.assertEqual([str(i) for i in self.gi.waiting], ["1","4","5"])
-        self.assertEqual(self.gi.removeWaiting("9"),1)
-        self.assertEqual([str(i) for i in self.gi.waiting], ["1","4","5"])
-
-class TestGame(unittest.TestCase):
-
-    def setUp(self):
-        self.gi = GameInstance()
+        self.gi.addWaiting(self.player1)
+        self.gi.addWaiting(self.player2)
+        self.assertEqual(self.gi.addWaiting(self.player3),0)
+        self.assertEqual(self.gi.addWaiting(self.player3),1)
+        self.gi.addWaiting(self.player4)
+        self.assertEqual(self.gi.removeWaiting(self.player2),0)
+        self.assertEqual(self.gi.waiting, [self.player1,self.player3,self.player4])
+        self.assertEqual(self.gi.removeWaiting(self.player3),0)
+        self.assertEqual(self.gi.waiting, [self.player1,self.player4])
+        self.assertEqual(self.gi.addWaiting(self.player5),0)
+        self.assertEqual(self.gi.waiting, [self.player1,self.player4,self.player5])
+        self.assertEqual(self.gi.removeWaiting(self.player9),1)
+        self.assertEqual(self.gi.waiting, [self.player1,self.player4,self.player5])        
 
     def testShuffle(self):
         self.gi.reset()
-        self.assertFalse(self.gi.addWaiting("1"))
-        self.gi.addWaiting("2")
+        self.assertFalse(self.gi.addWaiting(self.player1))
+        self.gi.addWaiting(self.player2)
         self.assertEqual(self.gi.shuffle(),{})
-        self.assertEqual(self.gi.waiting,["1","2"])
-        self.gi.addWaiting("3")
-        self.gi.addWaiting("4")
-        self.gi.addWaiting("5")
-        self.gi.addWaiting("6")
-        self.gi.addWaiting("7")
-        self.gi.addWaiting("8")
-        self.gi.addWaiting("9")
+        self.assertEqual(self.gi.waiting,[self.player1,self.player2])
+        self.gi.addWaiting(self.player3)
+        self.gi.addWaiting(self.player4)
+        self.gi.addWaiting(self.player5)
+        self.gi.addWaiting(self.player6)
+        self.gi.addWaiting(self.player7)
+        self.gi.addWaiting(self.player8)
+        self.gi.addWaiting(self.player9)
         ret1 = self.gi.shuffle()
         self.assertEqual(len(self.gi.waiting), 1)
-        self.assertEqual(len(ret1[1]), 4)
+        self.assertEqual(len(ret1["1"]), 4)
         ret2 = self.gi.shuffle()
         self.assertEqual(ret2,{})
-        self.gi.addWaiting("10")
-        self.gi.addWaiting("11")
-        self.gi.addWaiting("12")
-        self.gi.addWaiting("13")
+        self.assertEqual(len(self.gi.tables), 2)
+        self.gi.addWaiting(self.player10)
+        self.gi.addWaiting(self.player11)
+        self.gi.addWaiting(self.player12)
+        self.gi.addWaiting(self.player13)
         ret3 = self.gi.shuffle(2)
         self.assertEqual(len(ret3),2)
         self.assertEqual(len(self.gi.waiting), 1)
+        self.assertEqual(len(self.gi.tables), 4)
+        self.assertEqual(self.gi.tableGG("17"),1)
+        self.assertEqual(self.gi.tableGG("3"),0)
+        self.assertEqual(self.gi.tableGG("3"),1)
 
-class TestTourny(unittest.TestCase):
-    
-    def setUp(self):
-        self.gi = GameInstance()
-
-    def testReport(self):
-        self.gi.reset()
-        self.assertFalse(self.gi.report("Moku",25000))
-
-    def testPlayer(self):
-        self.gi.reset()
-        self.assertFalse(self.gi.addPlayer("Moku"))
-        self.assertFalse(self.gi.addPlayer("moku"))
-        self.assertTrue(self.gi.addPlayer("Moku"))
-        self.assertFalse(self.gi.removePlayer("Moku"))
-        self.assertTrue(self.gi.removePlayer("Moku"))
-        #self.gi.parseGame("http://tenhou.net/0/?log=2020061514gm-0209-19713-de5270f7&tw=0")
-        #self.assertFalse(self.gi.parseGame("https://tenhou.net/0/?log=2020061613gm-0209-19691-0508dda5&tw=1"))
-        #self.assertTrue(self.gi.parseGame("https://tenhou.net/0/?log=2020061613gm-0209-19691-0508dda5&tw=1"))
-        #self.assertTrue(self.gi.parseGame("https://tenhou.net/0/?log=2020061613gm-0209-19691-0508dda5"))
-
-        #self.assertTrue(self.gi.parseGame("https://tenhou.net/0/"))        
-        #self.gi.parseGame("http://tenhou.net/0/?log=2020061809gm-0209-19691-ed012917&tw=3")
-        #self.gi.parseGame("https://tenhou.net/0/?log=2020061613gm-0209-19691-2444973d&tw=3")
-        #self.gi.parseGame("https://tenhou.net/0/?log=2020061612gm-0209-19691-4023b1f9&tw=3")
-        #self.gi.parseGame("http://tenhou.net/0/?log=2020061514gm-0209-19713-5953946a&tw=0")
-
-
-class TestDB(unittest.TestCase):
-    
-    def setUp(self):
-        initDB()
-
-    def testUser(self):
-        addUser(1,"moku")
-        self.assertEqual(getUser(1),"moku")
-        addUser(1,"mokuz")
-        self.assertEqual(getUser(1),"mokuz")
         
 if __name__ == '__main__':
     unittest.main()

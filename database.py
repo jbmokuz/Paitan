@@ -1,39 +1,62 @@
-import sqlite3
+from objects import GameInstance
+from glob import glob
+from os import path
+import requests
+import pickle
 
-DATABASE = "database.db"
+DB_PATH="./databases"
 
-def dbfun(fun):
-    def wrapper(*args, **kwargs):
-        conn = sqlite3.connect(DATABASE)
+GAME_INSTANACE_D = {}
 
-        ret = fun(conn,*args, **kwargs)
-        
-        conn.commit()
-        conn.close()
+def writeGameInstance(guildId, gi):
+    filePath = f"{DB_PATH}/{guildId}"    
+    with open(filePath,'wb') as f:
+        pickle.dump(gi,f)
 
-        return ret
-        
+def saveInstance(fun):
+    def wrapper(guildId,*args):
+        gi = getGameInstance(guildId)
+        ret = fun(gi,*args)
+        if ret != None:
+            writeGameInstance(guildId,ret)
+            return ret
+        return gi
     return wrapper
 
+def getGameInstance(guildId):
+    global GAME_INSTANACE_D
+    if guildId in GAME_INSTANACE_D:
+        return GAME_INSTANACE_D[guildId]
+    
+    filePath = f"{DB_PATH}/{guildId}"
+    if not path.exists(filePath):
+        gi = GameInstance()
+        writeGameInstance(guildId,gi)
+    with open(filePath,'rb') as f:
+        gi = pickle.load(f)
+    GAME_INSTANACE_D[guildId] = gi
+    return gi
+    
+@saveInstance
+def setAdminPage(gi,adminPage):
 
-@dbfun
-def initDB(conn):
+    if len(adminPage) < 12:
+        return None
+    if adminPage[0] != "C":
+        return None
+    
+    gi.adminPage = adminPage
+    return gi
+
+@saveInstance
+def setRules(gi,rule):
+    
     try:
-        conn.execute('''CREATE TABLE USERS
-             (ID INT PRIMARY KEY     NOT NULL,
-             NICK           TEXT    NOT NULL);''')
+        rule = int(rule,16)
     except:
-        pass
-
-@dbfun
-def addUser(conn,id,nick):
-    try:
-        conn.execute(f"INSERT INTO USERS (ID,NICK) VALUES ({id}, '{nick}');")
-    except sqlite3.IntegrityError:
-        conn.execute(f"UPDATE USERS set NICK = '{nick}' where ID = {id}")
-
-@dbfun
-def getUser(conn,id):
-    cursor = conn.execute(f"SELECT NICK from USERS WHERE ID is {id}")
-    a = [i for i in cursor][0][0]
-    return a
+        return None
+    if rule > 0xFFFF:
+        return None
+    
+    gi.rule = rule
+    return gi

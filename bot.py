@@ -1,38 +1,87 @@
-import discord, os
+import discord, os, random
 from discord.ext import commands
-from functions import *
+from database import *
+from objects import TENSAN, TENGO, TENPIN
 import requests, sys, re
 import xml.etree.ElementTree as ET
 import copy
 import urllib
 
-
-TOKEN = os.environ["DISCORD_DEV_TOKEN"]
-ROOM_KEY = os.environ["TENHOU_DEV_KEY"]
+if len(sys.argv) > 1:
+    TOKEN = os.environ["DISCORD_DEV_TOKEN"]
+else:
+    TOKEN = os.environ["PAITAN_TOKEN"]
 
 bot = commands.Bot("!")
-gi = GameInstance()
 
+def get_vars(ctx):
+    player = ctx.author
+    chan = ctx.channel
+    gi = getGameInstance(chan.guild.id)
+    return player,chan,gi
+
+@bot.command()
+async def set_tenhou_page(ctx,admin_page):
+    """
+    Set the tenhou admin page
+    Args:
+        tenhou admin page
+    """
+    player, chan, gi = get_vars(ctx)
+    setAdminPage(chan.guild.id,admin_page)
+
+    number = 1
+    async for message in chan.history(limit=100):
+        if message.author.id == player.id:
+            await message.delete()
+            number -= 1
+        if number == 0:
+            break
+
+    await chan.send("Set tenhou admin page")
+
+@bot.command()
+async def set_tenhou_rules(ctx,rues):
+    """
+    Set the tenhou rules
+    Args:
+        tenhou rules
+    """
+    player, chan, gi = get_vars(ctx)
+    setRules(chan.guild.id,rules)
+    await chan.send("Set")
+
+@bot.command()
+async def info(ctx):
+    """
+    get info about rooms and bot
+    """
+    ret = ""
+    player, chan, gi = get_vars(ctx)
+    ret += f"https://tenhou.net/0/?{gi.adminPage[0:9]}\n"
+    ret += "https://github.com/jbmokuz/Paitan\n"
+    await chan.send(ret)
+
+    
 @bot.command()
 async def start(ctx, p1=None, p2=None, p3=None, p4=None, randomSeat="true"):
     """
     Start Tenhou Game
     Args:
-        player1 player2 player3 player3 randomSeating=[true/false]
+        player1 player2 player3 player4 randomSeating=[true/false]
     """
 
-    player = ctx.author
-    chan = ctx.channel
-
-    if (p1 == None or p2 == None or p3 == None):
+    player, chan, gi = get_vars(ctx)
+    
+    if (p1 == None or p2 == None or p3 == None or p4 == None):
         await chan.send(f"Please specify 4 players space separated")
         return
 
-    player_names = [p1,p2,p3]
+    player_names = [p1,p2,p3,p4]
 
     data = {
-        "L":ROOM_KEY,
-        "R2":"0011",
+        "L":gi.adminPage,
+        "R2":gi.rules,
         "RND":"default",
         "WG":"1"
         }
@@ -49,27 +98,23 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, randomSeat="true"):
         return
     await chan.send(urllib.parse.unquote("&".join(resp.url.split("&")[1:])))
 
-
-
-
 @bot.command(aliases=['p'])
 async def ping(ctx):
     """
     Ping!
     """
+    player, chan, gi = get_vars(ctx)
+    
     player = ctx.author
     chan = ctx.channel
-    await chan.send(f"pong")
-
+    await chan.send(f"pong {chan.guild.id}")
 
 @bot.command(aliases=['oi'])
 async def join(ctx):
     """
     Join a list to wait for a game!
     """
-
-    player = ctx.author
-    chan = ctx.channel
+    player, chan, gi = get_vars(ctx)
 
     ret = gi.addWaiting(player)
     if ret != 0:
@@ -77,13 +122,12 @@ async def join(ctx):
         return
     await chan.send(f"{player} joined the waiting to play list!")
 
-
 @bot.command(aliases=['rm','remove','rme'])
 async def leave(ctx):
     """
     Leave the waiting to play list :(
     """
-
+    player, chan, gi = get_vars(ctx)
     player = ctx.author
     chan = ctx.channel
 
@@ -93,15 +137,12 @@ async def leave(ctx):
         return
     await chan.send(f"{player} left the waiting to play list!")
 
-
 @bot.command(aliases=['clearlist'])
 async def clear(ctx):
     """
     Clear waiting to play list
     """
-    
-    player = ctx.author
-    chan = ctx.channel
+    player, chan, gi = get_vars(ctx)
     
     gi.reset()
     await chan.send(f"Cleared!")
@@ -111,14 +152,12 @@ async def shuffle(ctx):
     """
     Assign players to tables!
     """
-    player = ctx.author
-    chan = ctx.channel
-    
-    tableD = gi.shuffle()
+    player, chan, gi = get_vars(ctx)    
 
-    
+    tableD = gi.shuffle(4)
+
     if tableD == {}:
-        await chan.send("Not tables could be made!")
+        await chan.send("No tables could be made!")
     else:
         ret = ""
         for table in tableD:
@@ -127,74 +166,158 @@ async def shuffle(ctx):
                 ret += "  "+str(player)+"\n"
             ret += "\n"
         await chan.send(ret)
-
     
 @bot.command(aliases=["showlist"])
 async def list(ctx):
     """
     Show who is looking to play mahjong!
     """
-
+    player, chan, gi = get_vars(ctx)
     player = ctx.author
     chan = ctx.channel
 
-    ret = ""
-
+    ret = "==== Tables ====\n"
+    if gi.tables == {}:
+        ret += "Currently no one is playing a game\n"
+    else:
+        for t in gi.tables:
+            ret += f"{t}:\n"
+            for p in gi.tables[t]:
+                ret += f"  {p.name}\n"
+        
+    ret += "\n==== Waiting ====\n"
     if gi.waiting == []:
-        await chan.send("Currently no one is waiting to play")
+        ret += ("Currently no one is waiting to play\n")
     else:
         for p in gi.waiting:
-            ret += str(p) + "\n"
-        await chan.send(ret)
+            ret += f"{p.name}\n"
+    await chan.send(ret)
 
-@bot.command(aliases=["ranking"])
-async def rankings(ctx,player_name=None):
+@bot.command(aliases=["table","tableglhf"])
+async def glhf(ctx,room_number):
     """
-    Show the info for a player
+    Ping everyone in a table with room number!
     """
-    
-    player = ctx.author
-    chan = ctx.channel
+    player, chan, gi = get_vars(ctx)
+
     ret = ""
-    
-    if player_name == None:
-        for p in sorted(gi.players, key=lambda k: (len(gi.players[k].yaku), gi.players[k].kans))[::-1]:
-            ret += str(gi.players[p]) + "\n"
-        await chan.send(ret)
-        return
-    
-    if not player_name in gi.players:
-        await chan.send("player not found")
-        return
 
-    p = gi.players[player_name]
-    ret += str(p) + "\n"
-    for yaku in p.yaku:
-        ret += yaku + "\n"
-    #await player.send(ret)
-    await chan.send(ret)    
+    table_number = gi.isPlaying(player)
+
+    if table_number == 0:
+        await chan.send(f"{player.name} is not playing!")
+        return
+    else:
+        for p in gi.tables[table_number]:
+            ret += f"{p.mention} "
+        ret += f"\nRoom number: ```{room_number}```"
+    await chan.send(ret)
+
+@bot.command(aliases=["gg"])
+async def tablegg(ctx):
+    """
+    Ping everyone in a table!
+    """
+    player, chan, gi = get_vars(ctx)
+    
+    ret = ""
+
+    table_number = gi.isPlaying(player)
+
+    if table_number == 0:
+        await chan.send(f"{player.name} is not playing!")
+        return
+    else:
+        for p in gi.tables[table_number]:
+            ret += f"{p.mention} "
+        ret += f"\nHave finished there game!\nPlease use !join to rejoin the list"
+    gi.tableGG(table_number)
+    await chan.send(ret)
     
 @bot.command()
-async def score(ctx, log=None):
+async def explain(ctx):
     """
+    Explain how the last scoring was calculated
+    """
+    player, chan, gi = get_vars(ctx)    
+
+    if(gi.lastScore == ""):
+        await chan.send("Nothing has been scored yet")
+        return
+    await player.send(gi.lastScore)
+    
+@bot.command()
+async def score(ctx, log=None, rate="tensan", shugi=None):
+    """
+    Score a tenhou log! (Results in cm)
     Args:
         log:
             A full url or just the log id
+        rate (optional):
+            tensan(default), tengo, or tenpin
+        shugi (optional):
+            defaults to the rate shugi
     """
+    player, chan, gi = get_vars(ctx)    
 
-    
-    player = ctx.author
-    chan = ctx.channel
-
-    if log == None:
-        await chan.send("usage: !score [tenhou_log] !score https://tenhou.net/0/?log=2020051313gm-0209-19713-10df4ad2&tw=1")
+    if log == None or rate == None:
+        await chan.send("usage: !score [tenhou_log] [rate]\nEx: !score https://tenhou.net/0/?log=2020051313gm-0209-19713-10df4ad2&tw=1 tengo")
         
-    ret = gi.parseGame(log)
-    if ret != 0:
-        await chan.send(gi.lastError)
+    table = [["Score","","Pay","Name"]]
+
+    rate = rate.lower()
+    tableRate = None
+    
+    if rate == "tensan" or rate == "0.3" or rate == ".3":
+        tableRate = copy.deepcopy(TENSAN)
+    elif rate == "tengo" or rate == "0.5" or rate == ".5":
+        tableRate = copy.deepcopy(TENGO)
+    elif rate == "tenpin" or rate == "1.0":
+        tableRate = copy.deepcopy(TENPIN)
+    else:
+        await chan.send(f"{rate} is not a valid rate (try !help score)")
         return
 
-    await chan.send(gi.lastError)
+    if(shugi != None):
+        try:
+            tableRate.shugi = round(float(shugi),3)
+        except:
+            await chan.send(f"{shugi} is not a valid shugi")
+            return
+        
+    players = gi.parseGame(log, tableRate)
+
+        
+    for p in players:
+        score = str(p.score)
+        shugi = str(p.shugi)
+        payout = str(p.payout)
+        #if not "-" in score:
+        #    score = "+"+score
+        if not "-" in shugi:
+            shugi = "+"+shugi
+        if not "-" in payout:
+            payout = "+"+payout       
+        table.append([str(score),str(shugi),str(payout),str(p.name)])
+
+    colMax = [max([len(i) for i in c]) for c in zip(*table)]
+    colMax[-1] = 0
+    
+    ret = f"```{tableRate}\n"
+    for row in table:
+        for i,col in enumerate(colMax):
+            ret += row[i].ljust(col+1)
+        ret += "\n"
+    ret += "```"
+
+    for guild in bot.guilds:
+        for log_chan in guild.text_channels:
+            if str(log_chan) == "daily-log":
+                print("found")
+                await log_chan.send(log)
+                await log_chan.send(ret)
+
+    await chan.send(ret)
     
 @bot.event
 async def on_ready():
