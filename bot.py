@@ -6,13 +6,14 @@ import requests, sys, re
 import xml.etree.ElementTree as ET
 import copy
 import urllib
+from discord.ext.commands import has_permissions, MissingPermissions
 
 if len(sys.argv) > 1:
     TOKEN = os.environ["DISCORD_DEV_TOKEN"]
 else:
-    TOKEN = os.environ["PAITAN_TOKEN"]
+    TOKEN = os.environ["CHIITAN_TOKEN"]
 
-bot = commands.Bot("!")
+bot = commands.Bot("$")
 
 def get_vars(ctx):
     player = ctx.author
@@ -58,8 +59,9 @@ async def info(ctx):
     """
     ret = ""
     player, chan, gi = get_vars(ctx)
-    ret += f"https://tenhou.net/0/?{gi.adminPage[0:9]}\n"
-    ret += "https://github.com/jbmokuz/Paitan\n"
+    ret += f"```Tenhou: https://tenhou.net/0/?{gi.adminPage[0:9]}\n\n"
+    ret += "Add Chii-tan to your server: https://discord.com/api/oauth2/authorize?client_id=732219732547076126&permissions=522304&scope=bot\n\n"
+    ret += "Source: https://github.com/jbmokuz/Paitan\n\n```"
     await chan.send(ret)
 
     
@@ -79,6 +81,8 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, randomSeat="true"):
 
     player_names = [p1,p2,p3,p4]
 
+    print(f"Starting, Admin:{gi.adminPage} Rules:{gi.rules}")
+    
     data = {
         "L":gi.adminPage,
         "R2":gi.rules,
@@ -230,7 +234,7 @@ async def tablegg(ctx):
     else:
         for p in gi.tables[table_number]:
             ret += f"{p.mention} "
-        ret += f"\nHave finished there game!\nPlease use !join to rejoin the list"
+        ret += f"\nHave finished their game!\nPlease use !join to rejoin the list"
     gi.tableGG(table_number)
     await chan.send(ret)
     

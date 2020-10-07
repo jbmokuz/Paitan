@@ -69,6 +69,7 @@ class GameInstance():
         self.waiting = []
         self.lastError = ""
         self.players = {}
+        self.tables = {}
         self.logIds = set([])
 
         
