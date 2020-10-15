@@ -22,6 +22,30 @@ def get_vars(ctx):
     return player,chan,gi
 
 @bot.command()
+async def ping_for_games(ctx):
+    player, chan, gi = get_vars(ctx)
+    roles = await chan.guild.fetch_roles()
+    if not "Ping for Games" in [i.name for i in roles]:
+        await chan.guild.create_role(name="Ping for Games")
+
+    role = discord.utils.get(chan.guild.roles, name="Ping for Games")
+    await player.add_roles(role)
+    await chan.send("Added")
+
+
+@bot.command()
+async def remove_ping_for_games(ctx):
+    player, chan, gi = get_vars(ctx)
+
+    roles = await chan.guild.fetch_roles()
+    if not "Ping for Games" in [i.name for i in roles]:
+        await chan.guild.create_role(name="Ping for Games")
+    
+    role = discord.utils.get(chan.guild.roles, name="Ping for Games")
+    await player.remove_roles(role)
+    await chan.send("Removed")
+
+@bot.command()
 async def set_tenhou_page(ctx,admin_page):
     """
     Set the tenhou admin page
@@ -42,7 +66,7 @@ async def set_tenhou_page(ctx,admin_page):
     await chan.send("Set tenhou admin page")
 
 @bot.command()
-async def set_tenhou_rules(ctx,rues):
+async def set_tenhou_rules(ctx,rules):
     """
     Set the tenhou rules
     Args:
@@ -60,7 +84,7 @@ async def info(ctx):
     ret = ""
     player, chan, gi = get_vars(ctx)
     ret += f"```Tenhou: https://tenhou.net/0/?{gi.adminPage[0:9]}\n\n"
-    ret += "Add Chii-tan to your server: https://discord.com/api/oauth2/authorize?client_id=732219732547076126&permissions=522304&scope=bot\n\n"
+    ret += "Add Chii-tan to your server: https://discord.com/api/oauth2/authorize?client_id=732219732547076126&permissions=268957760&scope=bot\n\n"
     ret += "Source: https://github.com/jbmokuz/Paitan\n\n```"
     await chan.send(ret)
 
@@ -318,8 +342,11 @@ async def score(ctx, log=None, rate="tensan", shugi=None):
         for log_chan in guild.text_channels:
             if str(log_chan) == "daily-log":
                 print("found")
-                await log_chan.send(log)
-                await log_chan.send(ret)
+                try:
+                    await log_chan.send(log)
+                    await log_chan.send(ret)
+                except:
+                    print("No permissions to post in daily-log")
 
     await chan.send(ret)
     
