@@ -10,6 +10,7 @@ class Player():
         self.obj = player
         self.name = ""
         self.score = 0
+        self.payout = 0
         self.yaku = {}
         self.kans = 0
         self.defkan = 0
@@ -25,7 +26,7 @@ class TableRate():
     def __init__(self, rate=0.3, shugi=.50, target=30000, start=25000, uma=[30,10,-10,-30]):
         self.rate = rate
         self.shugi = shugi
-        self.oka = (target - start) * 4
+        self.oka = 0
         self.target = target
         self.start = start
         self.uma = uma
@@ -48,7 +49,10 @@ class GameInstance():
         self.tables = {}
         self.lastError = ""
         self.players = {}
+        self.people = {}
+        self.parsedLogs = {}
         self.logIds = set([])
+
 
         self.MAX_PLAYERS = 4 # WARNING NEVER EVER SET TO 3!
         self.rules = "000B"
@@ -74,6 +78,7 @@ class GameInstance():
 
         
     def scoreTable(self, players, tableRate):
+        
         players.sort(key=lambda x: x.score,reverse=True)
         self.lastScore = ""
         
@@ -108,17 +113,29 @@ class GameInstance():
             calc = (((p.score + oka[i] - tableRate.target)/1000) + tableRate.uma[i]) * tableRate.rate + shugi
             p.payout = round(calc,2)
             self.lastScore += f"#{i+1}Place: (((({p.score}+{oka[i]}-{tableRate.target})/1000)+{tableRate.uma[i]})×{tableRate.rate}+{tableRate.shugi}×{p.shugi}) = ${p.payout}\n"
-
+           
         return players
 
-
-    def parseGame(self, log, rate=TENSAN):
-
+    def getRawqLog(self, log, rate=TENSAN):
         if "https://" in log.lower() or "http://" in log.lower():
             log = log.split("=")[1].split("&")[0]
-        xml = requests.get("http://tenhou.net/0/log/?"+log).text
+        xml = requests.get("http://tenhou.net/0/log/?"+log)
+        if xml.status_code != 200:
+            return ""
         print("Prasing http://tenhou.net/0/log/?"+log)
-
+        xml = xml.text
+        return xml,log
+    
+    def parseTenhouXML(self,xml,rate=TENSAN):
+        """
+        m = hashlib.md5()
+        m.update(xml.encode("UTF-8"))
+        h = m.hexdigest()
+        if h in self.hashes:
+            return None
+        self.hashes.add(h)
+        print(h)
+        """
         def convertToName(s):
             ret = bytes()
             for c in s.split("%")[1:]:
@@ -161,6 +178,7 @@ class GameInstance():
         for i in range(0,4):
             players[i].score = int(owari[i*2])*100
             players[i].shugi = int(owari[i*2+8])
+
 
         return self.scoreTable(players, rate)
 

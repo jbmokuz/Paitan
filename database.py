@@ -36,10 +36,16 @@ def getGameInstance(guildId):
         gi = pickle.load(f)
     GAME_INSTANACE_D[guildId] = gi
     return gi
+
+@saveInstance
+def saveLog(gi, rawLog, parsedLog, logid):
+    gi.rawLogs[logid] = rawLog
+    gi.parsedLogs[logid] = parsedLog
+    
     
 @saveInstance
 def setAdminPage(gi,adminPage):
-
+    
     if len(adminPage) < 12:
         return None
     if adminPage[0] != "C":

@@ -21,6 +21,35 @@ def get_vars(ctx):
     gi = getGameInstance(chan.guild.id)
     return player,chan,gi
 
+
+@bot.command()
+async def scores(ctx):
+    player, chan, gi = get_vars(ctx)
+    order = []
+    ret = "```\n"
+    for i in gi.players:
+        p = gi.players[i]
+        order.append([p.payout,p.name])
+    order.sort()
+    order = order[::-1]
+    for score,name in order:
+        if "-" in str(p.score):
+            ret += f"+{score} {name}\n"
+        else:
+            ret += f" {score} {name}\n"
+    ret += "```"
+    await chan.send(ret)
+    
+
+@bot.command()
+async def shogi_puzzle(ctx):
+    player, chan, gi = get_vars(ctx)
+    file = discord.File("screenshot.png", filename="image.png")
+    embed = discord.Embed()
+    embed.set_image(url="attachment://image.png")
+    await chan.send(file=file, embed=embed)
+
+
 @bot.command()
 async def ping_for_games(ctx):
     player, chan, gi = get_vars(ctx)
@@ -313,9 +342,15 @@ async def score(ctx, log=None, rate="tensan", shugi=None):
             await chan.send(f"{shugi} is not a valid shugi")
             return
         
-    players = gi.parseGame(log, tableRate)
+    rawLog, logId = gi.getRawLog(log)
+    if rawLog == "":
+        await chan.send("Could download log")
+        return
+    players = gi.parseTenhouXML(rawLog, tableRate)
+    if players == None:
+        await chan.send("Already submitted")
+        return
 
-        
     for p in players:
         score = str(p.score)
         shugi = str(p.shugi)
@@ -337,7 +372,7 @@ async def score(ctx, log=None, rate="tensan", shugi=None):
             ret += row[i].ljust(col+1)
         ret += "\n"
     ret += "```"
-
+    """
     for guild in bot.guilds:
         for log_chan in guild.text_channels:
             if str(log_chan) == "daily-log":
@@ -347,7 +382,8 @@ async def score(ctx, log=None, rate="tensan", shugi=None):
                     await log_chan.send(ret)
                 except:
                     print("No permissions to post in daily-log")
-
+    """
+    saveLog(gi, rawLog, ret, logId)
     await chan.send(ret)
     
 @bot.event
