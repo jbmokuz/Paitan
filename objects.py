@@ -50,6 +50,7 @@ class GameInstance():
         self.lastError = ""
         self.players = {}
         self.people = {}
+        self.rawLogs = {}
         self.parsedLogs = {}
         self.logIds = set([])
 
@@ -116,7 +117,7 @@ class GameInstance():
            
         return players
 
-    def getRawqLog(self, log, rate=TENSAN):
+    def getRawLog(self, log, rate=TENSAN):
         if "https://" in log.lower() or "http://" in log.lower():
             log = log.split("=")[1].split("&")[0]
         xml = requests.get("http://tenhou.net/0/log/?"+log)
