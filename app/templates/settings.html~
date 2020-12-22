@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <h1>Manage a Club<h1>
+	{% for c in clubs %}
+	<a href="{{ url_for('club_settings') }}">CLUB</a>
+	{% endfor %}
+</br>
+</br>
+
+    <h1>Set Password</h1>
+    <form action="" method="post">
+        {{ pass_form.hidden_tag() }}
+        <p>
+            {{ pass_form.password.label }}<br>
+            {{ pass_form.password(size=32) }}<br>
+            {% for error in pass_form.password.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ pass_form.password2.label }}<br>
+            {{ pass_form.password2(size=32) }}<br>
+            {% for error in pass_form.password2.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>{{ pass_form.submit() }}</p>
+    </form>
+{% endblock %}

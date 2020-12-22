@@ -1,0 +1,18 @@
+<html>
+    <head>
+    </head>
+    <body>
+      <div>
+	<a href="{{ url_for('index') }}">Home</a>
+	{% if not  current_user.is_authenticated %}
+        <a href="{{ url_for('login') }}">Login</a>
+	{% endif %}
+	{% if current_user.is_authenticated %}
+	<a href="{{ url_for('logout') }}">Logout</a>
+	<a href="{{ url_for('settings') }}">settings</a>
+	{% endif %}
+      </div>
+        <hr>
+        {% block content %}{% endblock %}
+    </body>
+</html>

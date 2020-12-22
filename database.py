@@ -1,8 +1,11 @@
 from objects import GameInstance
 from glob import glob
-from os import path
-import requests
-import pickle
+
+from app.models import User, Club, ClubManagement
+from app import db
+
+import random
+import string
 
 DB_PATH="./databases"
 
@@ -14,16 +17,94 @@ def writeGameInstance(guildId, gi):
         pickle.dump(gi,f)
 
 def saveInstance(fun):
-    def wrapper(guildId,*args):
-        gi = getGameInstance(guildId)
-        ret = fun(gi,*args)
-        if ret != None:
-            writeGameInstance(guildId,ret)
-            return ret
-        return gi
+    def wrapper(*args):
+        ret = fun(*args)
+        db.session.commit()
+        return ret
     return wrapper
 
-def getGameInstance(guildId):
+@saveInstance
+def addUserToClub(guildId,userId):
+    u = db.session.query(User).filter(User.user_id==userId).first()
+    if u == None:
+        return 1
+    c = db.session.query(Club).filter(Club.club_id==guildId).first()
+    if c == None:
+        return 2
+    if db.session.query(ClubManagement).filter(ClubManagement.user_id==userId,ClubManagement.club_id==guildId).first():
+        return 3
+    cm = ClubManagement(club_id=guildId,user_id=userId)
+    db.session.add(cm)
+    return 0
+
+@saveInstance
+def createClub(clubId,clubName):
+
+
+    if db.session.query(Club).filter(Club.club_name==clubName).first():
+        return 1
+    
+    if db.session.query(Club).filter(Club.club_id==clubId).first():
+        return 2
+
+    
+    c = Club(club_id=clubId,club_name=clubName)
+    db.session.add(c)
+    return 0
+
+
+@saveInstance
+def createUser(userId,userName):
+
+
+    if db.session.query(User).filter(User.user_name==userName).first():
+        return 1
+    
+    if db.session.query(User).filter(User.user_id==userId).first():
+        return 2
+
+    
+    password = ''.join([random.choice(string.printable[:62]) for i in range(16)])
+
+    u = User(user_id=userId,user_name=userName)
+    u.set_password(password)
+    db.session.add(u)
+    return password
+
+
+@saveInstance
+def changePassword(userId):
+    u = db.session.query(User).filter(User.user_id==userId).first()
+    if not u:
+        return 1
+
+    password = ''.join([random.choice(string.printable[:62]) for i in range(16)])
+    u.set_password(password)
+    return password
+
+
+def getClubsForUser(userId):
+    
+    ret = []
+    for cm in db.session.query(ClubManagement).filter(ClubManagement.user_id==userId):
+        ret.append(getClub(cm.club_id))
+    return ret
+    
+def getClub(guildId):
+
+    club = db.session.query(Club).filter(Club.club_id==guildId).first()
+    if not club:
+        return 1
+    return club
+
+def getUser(userId):
+
+    club = db.session.query(User).filter(User.user_id==userId).first()
+    if not club:
+        return 1
+    return club
+
+    """
     global GAME_INSTANACE_D
     if guildId in GAME_INSTANACE_D:
         return GAME_INSTANACE_D[guildId]
@@ -36,6 +117,9 @@ def getGameInstance(guildId):
         gi = pickle.load(f)
     GAME_INSTANACE_D[guildId] = gi
     return gi
+    """
+
+"""
 
 @saveInstance
 def saveLog(gi, rawLog, parsedLog, logid):
@@ -66,3 +150,4 @@ def setRules(gi,rule):
     
     gi.rule = rule
     return gi
+"""

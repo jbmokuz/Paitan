@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1> Club {{club_name}} </h1>
+
+<h2>Curent Tenhou Settings:</h2>
+
+    <h1>Set Tenhou Info</h1>
+    <form action="" method="post">
+        {{ tenhou_form.hidden_tag() }}
+        <p>
+            {{ tenhou_form.admin_page.label }}<br>
+            {{ tenhou_form.admin_page(size=32) }}<br>
+            {% for error in tenhou_form.admin_page.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+	    </br>
+   	    Example: https://tenhou.net/cs/edit/?C1027212875018865
+        </p>
+        <p>
+            {{ tenhou_form.rules.label }}<br>
+            {{ tenhou_form.rules(size=32) }}<br>
+            {% for error in tenhou_form.rules.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+	    </br>
+      	    Example: 000B = No Aka, 0009 = Aka (Both full hanchan and Kuitan)
+        </p>
+
+	<!-- self.rules_traslations = ["","","","",
+                      "","Shugi 5000","Shugi 2000","Show Tsumokiri",
+                      "","3+5","","3Player",
+                      "Full Hanchan","No Kuitan","No Aka dora","Always on?"] -->
+	
+        <p>{{ tenhou_form.submit() }}</p>
+    </form>
+
+{% endblock %}
