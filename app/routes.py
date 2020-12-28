@@ -1,7 +1,7 @@
 from app import app
 from flask import render_template, flash, redirect,  url_for
 from flask_login import current_user, login_user, logout_user
-from app.models import User, Club
+from app.models import *
 from app.forms import LoginForm, PasswordForm, TenhouForm
 from app import db
 from database import *
@@ -52,7 +52,7 @@ def club_settings(club_id):
 
         try:
             club_id = int(club_id)
-            if club_id in [i.club_id for i in getClubsForUser(current_user.user_id)]:
+            if club_id in [i.club_id for i in getClubsManageForUser(current_user.user_id)]:
 
                 club = getClub(club_id)
                 if tenhou_form.validate_on_submit():

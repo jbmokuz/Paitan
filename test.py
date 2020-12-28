@@ -10,6 +10,170 @@ class DisPlayer():
     def __eq__(self, other):
         return self.id == other.id
 
+
+class TestDB(unittest.TestCase):
+
+    def testCreateUSer(self):
+        deleteUser(1)
+        deleteUser(2)
+        deleteUser(3)
+        
+        passwd1 = createUser(1,"TestUser1")
+        passwd2 = createUser(2,"TestUser2")
+        passwd3 = createUser(3,"TestUser3")
+
+        self.assertEqual(type(passwd1),type(""))
+        self.assertEqual(createUser(1,"TestUser1"),-1)
+        self.assertEqual(createUser(1,"TestUserzz"),-2)
+
+        self.assertEqual(deleteUser(2),0)
+        self.assertEqual(deleteUser(2),-1)
+
+        self.assertTrue(getUser(1))
+        self.assertFalse(getUser(2))
+        self.assertTrue(getUser(3))
+
+        deleteUser(1)
+        deleteUser(3)        
+
+
+    def testCreateClub(self):
+        deleteClub(11)
+        deleteClub(12)
+        deleteClub(13)
+
+        self.assertEqual(createClub(11,"TestClub1"),11)
+        self.assertEqual(createClub(12,"TestClub2"),12)
+        self.assertEqual(createClub(13,"TestClub3"),13)
+
+        self.assertEqual(deleteClub(12),0)
+        self.assertEqual(deleteClub(12),-1)
+
+        self.assertTrue(getClub(11))
+        self.assertFalse(getClub(12))
+        self.assertTrue(getClub(13))
+
+        deleteClub(11)
+        deleteClub(13)
+
+
+    def testCreateTourney(self):
+
+        deleteTenhouGame(1)
+
+        deleteUser(1)
+        deleteUser(2)
+        deleteUser(3)
+
+        passwd1 = createUser(1,"TestUser1")
+        passwd2 = createUser(2,"TestUser2")
+        passwd3 = createUser(3,"TestUser3")
+
+        deleteClub(11)
+        deleteClub(12)
+
+        self.assertEqual(createClub(11,"TestClub1"),11)
+        self.assertEqual(createClub(12,"TestClub2"),12)
+
+        t1 = createTourney(11,"Club11 Tourney1")
+        t2 = createTourney(11,"Club11 Tourney2")
+        t3 = createTourney(12,"Club12 Tourney1")
+
+
+        self.assertEqual(len(getTourneysForClub(11)),2)
+
+        self.assertEqual(deleteTourney(t1),0)
+        self.assertEqual(deleteTourney(t1),-1)
+
+        self.assertEqual(len(getTourneysForClub(11)),1)
+
+
+        game = createTenhouGame("http://www.test.com","ASan","BSan","CSan","DSan",30000,25000,35000,30000)
+
+        self.assertNotEqual(game,-1)
+        self.assertEqual(createTenhouGame("http://www.test.com","ASan","BSan","CSan","DSan",30000,25000,35000,30000),-1)
+
+        game2 = createTenhouGame("http://www.test.com2","ASan","BSan","CSan","DSan",30000,25000,35000,30000)
+
+        self.assertEqual(addGameToTourney(t2,game),0)
+        self.assertEqual(addGameToTourney(t2,game),-3)
+
+        self.assertEqual(len(getGamesForTourney(t2)),1)
+
+        self.assertEqual(addGameToTourney(t2,game2),0)
+
+        self.assertEqual(len(getGamesForTourney(t2)),2)
+
+
+        self.assertEqual(deleteTenhouGame(game),0)
+        self.assertEqual(deleteTenhouGame(game),-1)
+
+        self.assertEqual(deleteTenhouGame(game2),0)
+
+
+        self.assertEqual(deleteTourney(t2),0)
+        self.assertEqual(deleteTourney(t3),0)
+
+    def testUserToClub(self):
+        deleteUser(1)
+        deleteUser(2)
+        deleteUser(3)
+
+        passwd1 = createUser(1,"TestUser1")
+        passwd2 = createUser(2,"TestUser2")
+        passwd3 = createUser(3,"TestUser3")
+
+        deleteClub(11)
+        deleteClub(12)
+        deleteClub(13)
+
+        self.assertEqual(createClub(11,"TestClub1"),11)
+        self.assertEqual(createClub(12,"TestClub2"),12)
+        self.assertEqual(createClub(13,"TestClub3"),13)
+
+        self.assertEqual(addUserToClub(11,1),0)
+        self.assertEqual(addUserToClub(11,77),-1)
+        self.assertEqual(addUserToClub(77,1),-2)
+        self.assertEqual(addUserToClub(11,1),-3)
+
+        self.assertEqual(addUserToClub(12,1),0)
+        self.assertEqual(addUserToClub(13,1),0)
+
+        self.assertEqual(addUserToClub(11,2),0)
+        self.assertEqual(addUserToClub(11,3),0)
+
+        self.assertEqual(len(getClubsForUser(1)),3)
+        self.assertEqual(len(getClubsForUser(2)),1)
+        self.assertEqual(len(getClubsForUser(3)),1)
+
+        self.assertEqual(len(getUsersForClub(11)),3)
+        self.assertEqual(len(getUsersForClub(12)),1)
+        self.assertEqual(len(getUsersForClub(13)),1)
+
+        self.assertEqual(deleteUser(2),0)
+
+        self.assertEqual(len(getClubsForUser(1)),3)
+        self.assertEqual(len(getClubsForUser(3)),1)
+
+        self.assertEqual(len(getUsersForClub(11)),2)
+        self.assertEqual(len(getUsersForClub(12)),1)
+        self.assertEqual(len(getUsersForClub(13)),1)
+
+        self.assertEqual(deleteClub(12),0)
+
+        self.assertEqual(len(getClubsForUser(1)),2)
+        self.assertEqual(len(getClubsForUser(3)),1)
+
+        self.assertEqual(len(getUsersForClub(11)),2)
+        self.assertEqual(len(getUsersForClub(13)),1)
+
+        deleteUser(1)
+        deleteUser(3)
+
+        deleteClub(11)
+        deleteClub(13)
+        
+"""
 class TestLobby(unittest.TestCase):
     
     def setUp(self):
@@ -89,7 +253,7 @@ class TestLobby(unittest.TestCase):
         self.assertEqual(self.gi.tableGG("17"),1)
         self.assertEqual(self.gi.tableGG("3"),0)
         self.assertEqual(self.gi.tableGG("3"),1)
-
+"""
         
 if __name__ == '__main__':
     unittest.main()
