@@ -48,19 +48,18 @@ def createClub(clubId,clubName):
     return c.club_id
 
 
-def createTourney(clubId, tourneyName):
+def createTourney(tourneyName):
 
-    if db.session.query(Tourney).filter(Tourney.club_id==clubId,Tourney.tourney_name==tourneyName).first():
+    if db.session.query(Tourney).filter(Tourney.tourney_name==tourneyName).first() != None:
         return -1
     
-    t = Tourney(club_id=clubId, tourney_name=tourneyName)
+    t = Tourney(tourney_name=tourneyName)
     db.session.add(t)
 
     #Needed to add increment
     db.session.commit()
 
     return t.tourney_id
-
 
 
 def createTenhouGame(replayUrl, ton, nan, xia, pei, tonScore, nanScore, xiaScore, peiScore):
@@ -118,7 +117,7 @@ def addUserToTourney(tourneyId,userId):
         return -2
     if db.session.query(TourneyUserList).filter(TourneyUserList.user_id==userId,TourneyUserList.tourney_id==tourneyId).first():
         return -3
-    cl = ClubList(tourney_id=tourneyId,user_id=userId)
+    cl = TourneyUserList(tourney_id=tourneyId,user_id=userId)
     db.session.add(cl)
     return 0
 
@@ -187,7 +186,7 @@ def removeUserFromClub(guildId,userId):
     member = db.session.query(ClubList).filter(ClubList.user_id==userId,ClubList.club_id==guildId).first()
     if not member:
         return -1
-    member.delete()
+    return db.session.delete(member)
 
 
 @saveInstance
@@ -196,7 +195,7 @@ def removeUserFromClubManage(guildId,userId):
     member = db.session.query(ClubManage).filter(ClubManage.user_id==userId,ClubManage.club_id==guildId).first()
     if not member:
         return -1
-    member.delete()
+    return db.session.delete(member)
     
     
 @saveInstance
@@ -205,7 +204,7 @@ def removeUserFromTourney(tourneyId,userId):
     member = db.session.query(TourneyUserList).filter(TourneyUserList.user_id==userId,TourneyUserList.tourney_id==tourneyId).first()
     if not member:
         return -1
-    member.delete()
+    return db.session.delete(member)
 
 
 ## Get ##
@@ -287,7 +286,23 @@ def getGamesForTourney(tourneyId):
         if test != None:
             ret.append(test)
     return ret
-    
+
+## Update ##
+
+@saveInstance
+def updateClubTourney(clubId, tourneyId):
+    club = getClub(clubId)
+    if club == None:
+        return -1
+    club.tourney_id = tourneyId
+
+@saveInstance
+def updateUserTenhouName(userId, tenhouName):
+    user = getUser(userId)
+    if user == None:
+        return -1
+    user.tenhou_name = tenhouName
+    return 0
 
 ## Other ##
 
@@ -300,6 +315,4 @@ def changePassword(userId):
     password = ''.join([random.choice(string.printable[:62]) for i in range(16)])
     u.set_password(password)
     return password
-
-
 

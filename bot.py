@@ -20,46 +20,141 @@ def get_vars(ctx):
     player = ctx.author
     chan = ctx.channel
     gi = getClub(chan.guild.id)
-    if gi == 1:
+    if gi == None:
         createClub(chan.guild.id,chan.guild.name)
     gi = getClub(chan.guild.id)
     return player,chan, gi
 
-
-
 #id=119046709983707136 name='moku' discriminator='9015'
 @bot.command()
-@commands.has_permissions(administrator=True)
 async def createAccount(ctx):
     """
-    for testing
+    Create an account for this guild
     """
     player, chan, gi = get_vars(ctx)
     username = player.name+"#"+player.discriminator
     passwd = createUser(player.id,username)
-    if passwd == 1 or passwd == 2:
-        await player.send("User already created")
-        #return
+    if type(passwd) == type(0):
+        print(passwd)
+        password = changePassword(player.id)
+        await player.send(f"Password changed to: {passwd}")
     else:
         ret = f"Username:{username} Pass:{passwd}"
         await player.send(ret)
+
+    # Can they manage this chan?
+    if player.guild_permissions.administrator:
+        ret = addUserToClubManage(chan.guild.id,player.id)
+        if ret == 0:
+            await player.send(f"Now managing {chan.guild.name}")
+        else:
+            print(f"ERR: {ret}")
+
+    # Add user to chan
     ret = addUserToClub(chan.guild.id,player.id)
     if ret == 0:
-        await player.send(f"Now managing {chan.guild.name}")
+        await player.send(f"You are now a member of {chan.guild.name}")
     else:
         print(f"ERR: {ret}")
-    await player.send("Manage account @ http://yakuhai.com")
+
+    await player.send("Manage account @ http://yakuhai.com (Currently only for guild admins)")
 
 
+@bot.command()
+async def join(ctx):
+    """
+    Join current tourney
+    """
+    player, chan, gi = get_vars(ctx)
+    ret = addUserToTourney(gi.tourney_id,player.id)
+    if ret == -1:
+        await chan.send("Please register with $createAccount")
+        return
+    if ret == -2:
+        await chan.send("No tourney is currently running")
+        return
+    if ret == -3:
+        await chan.send("You have already joined")
+        return
+    await chan.send("Added!")
+
+@bot.command()
+async def leave(ctx):
+    """
+    Join current tourney
+    """
+    player, chan, gi = get_vars(ctx)
+    ret = removeUserFromTourney(gi.tourney_id,player.id)
+    if ret == -1:
+        await chan.send("You are not part of the tourney")
+        return
+    await chan.send("Removed")
+    
+@bot.command()
+async def list(ctx):
+    """
+    Join current tourney
+    """
+    player, chan, gi = get_vars(ctx)
+    if gi.tourney_id == None:
+        await chan.send("No tourney is currently running")
+        return
+    users = getUsersForTourney(gi.tourney_id)
+    if users == []:
+        await chan.send("No users have joined")
+        return
+    ret = "```"
+    for u in users:
+        ret += u.user_name
+        ret += "\n"
+    ret += "```"
+    await chan.send(ret)
+    
+    
+@bot.command()
+async def setTenhouName(ctx, tenhouName):
+    """
+    Set your tenhou name!
+    """
+    player, chan, gi = get_vars(ctx)
+    ret = updateUserTenhouName(player.id, tenhouName)
+    if ret < 0:
+        await chan.send(f"Error {ret}")
+        return
+    await chan.send("Updated tenhou name!")
+
+
+@bot.command()
+async def myInfo(ctx):
+    """
+    get info about you!
+    """
+    player, chan, gi = get_vars(ctx)
+
+    ret = "```"
+    user = getUser(player.id)
+    if user == None:
+        await chan.send("Please register with $createAccount")
+        return
+    await chan.send(f"Name: {user.user_name}\nTenhou: {user.tenhou_name}")
+    
 @bot.command()
 async def info(ctx):
     """
     get info about rooms and bot
     """
-    ret = ""
+    ret = "```"
     player, chan, gi = get_vars(ctx)
-    ret += f"```Tenhou: https://tenhou.net/0/?{gi.tenhou_room[0:9]}\n\n"
+
+    test = getTourney(gi.tourney_id)
+
+    if test != None and type(test) != type(1):
+        ret += f"Current Tourney: {test.tourney_name}\n\n"
+    
+    if not gi.tenhou_room == None:
+        ret += f"Tenhou: https://tenhou.net/0/?{gi.tenhou_room[0:9]}\n\n"
     ret += "Add Chii-tan to your server: https://discord.com/api/oauth2/authorize?client_id=732219732547076126&permissions=268957760&scope=bot\n\n"
+    ret += "Website: http://yakuhai.com\n\n"
     ret += "Source: https://github.com/jbmokuz/Paitan\n\n```"
     await chan.send(ret)
 
@@ -101,12 +196,70 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, randomSeat="true"):
         return
     await chan.send(urllib.parse.unquote("&".join(resp.url.split("&")[1:])))
 
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def startTourney(ctx, *args):
+    """
+    Start a Tourney on the server!
+    Args:
+        Tournament_Name (max 128 chars)
+    """
+    player, chan, gi = get_vars(ctx)
+
+    if len(args) < 1:
+        await chan.send("Please specify a tourney name!")
+        return 
+    
+    if gi.tourney_id != None:
+        await chan.send("Already have a tournament started!")
+        return        
+
+    tourneyId = createTourney( " ".join(args))
+
+    if updateClubTourney(gi.club_id, tourneyId) == -1:
+        await chan.send("No club created yet!")
+        return        
+    
+    if tourneyId < 0:
+        await chan.send("Already have a tournament by that name!")
+        return
+
+    await chan.send(f"Started Tourney '{getTourney(tourneyId).tourney_name}'")
+
+    
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def endTourney(ctx):
+    """
+    End a Tourney on the server!
+    """
+    player, chan, gi = get_vars(ctx)
+
+    if  gi.tourney_id == None:
+        await chan.send("No tournament started!")
+        return
+
+    tmp = ""
+    
+    try:
+        tmp = getTourney(gi.tourney_id).tourney_name
+    except:
+        pass
+    
+    # This really cant return -1 after calling get_vars?
+    if updateClubTourney(gi.club_id, None) == -1:
+        await chan.send("No club created yet!")
+        return
+
+    await chan.send(f"Ended Toruney '{tmp}'")
+    
 @bot.command(aliases=['p'])
 async def ping(ctx):
     """
     Ping!
     """
     player, chan, gi = get_vars(ctx)
+
     
     player = ctx.author
     chan = ctx.channel

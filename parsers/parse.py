@@ -1,46 +1,9 @@
-class Player():
-    def __init__(self, name, namesTenhou=[], namesMJsoul=[]):
-        self.name = name
-        self.namesTenhou = namesTenhou
-        self.namesMJsoul = namesMJsoul
-        self.score = 0
-        self.yaku = {}
-        self.kans = 0
-        self.placements = []
-        self.scores = []
+from parsers.TenhouDecoder import getGameObject
+import re
 
-class Game():
-    def __init__(self, players, time):
-        self.players = players
-        self.time = time
+# http://tenhou.net/0/?log=2020070913gm-0209-19691-21db0170&tw=2         
 
-
-playerD = {}
-gameD = {}
-
-
-class mahjongLogInterface(object):
-
-    def __init__(self, name):
-        name = ""
-    
-    # Takes an address and returns the log id part
-    def getLogID(self, address):
-        raise NotImplementedError()
-    
-    # Returns the log if in database, else 
-    def getLog
-
-    # Parses a game and returns game object.
-    # Updates player objects
-    def parse(self, log):
-        raise NotImplementedError()
-
-    
-
-        
-
-def getLogID(self, log):
+def getLogID(log):
     ret = ""
     rex = re.search("log=(.*)[&]{0,1}",log)
     if rex == None:
@@ -48,57 +11,31 @@ def getLogID(self, log):
         return 1
     try:
         if "&" in rex.group(1):
-            rex = rex.group(1).split("&")[0]
+            ret = rex.group(1).split("&")[0]
         else:
-            rex = rex.group(1).split("&")[0]            
+            ret = rex.group(1).split("&")[0]            
     except:
         self.lastError = "Some error parsing log URL"
-        return 1    
+        return 1
+    
+    return ret
     
 
-def parseTenhou(self,log):
-
-    if rex in self.logIds:
-        self.lastError = "Already seen this log"
-        return 1
-
-    self.logIds.add(rex)
+def parseTenhou(log):
 
     game = getGameObject(log)
     names = [n.name for n in game.players]
-    for n in names:
-        if not n in self.players:
-            self.players[n] = Player(n)
-    for r in game.rounds:
-        for agari in r.agari:
+    scores = [j for i,j in  enumerate(game.owari.split(",")) if i % 2 == 0][:len(names)]
 
-            player = names[agari.player]
-            for yaku, han in agari.yaku:
-                if han < 0:
-                    continue
-                if not yaku in self.players[player].yaku:
-                    self.players[player].yaku[yaku] = 0
-                self.players[player].yaku[yaku] += 1
-            for yaku in agari.yakuman:
-                yaku = "🌟**"+yaku+"**🌟"
-                if not yaku in self.players[player].yaku:
-                    self.players[player].yaku[yaku] = 0
-                self.players[player].yaku[yaku] += 1
+    if len(game.owari.split(",")) > 8:
+        shugi = [j for i,j in  enumerate(game.owari.split(",")) if i % 2 == 0][len(names):]
+    else:
+        shugi = [0 for i in range(len(names))]
 
-        for event in r.events:
-            if event.type == "Call":
-                if event.meld.type == "chakan" and event.meld.type != "kan":
-                    player = names[event.player]
-                    self.players[player].kans += 1
-    owari = [j for i,j in  enumerate(game.owari.split(",")) if i % 2 == 0][:self.MAX_PLAYERS]
-    for i,score in enumerate(owari):
-        self.players[names[i]].score += int(score)
+    ret = []
 
-    ret = ""
-    for p in names:
-        ret += f"{self.players[p]}\n"
-        ret += f"{[y for y in self.players[p].yaku]}\n"
-    self.lastError = ret[:-1]
+    for i in range(len(names)):
+        ret.append([names[i],int(scores[i]),int(shugi[i])])
 
-    return 0
+    return ret
 
