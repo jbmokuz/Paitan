@@ -21,7 +21,6 @@ class User(UserMixin,db.Model):
     user_name = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
-    club_id = db.Column(db.Integer, db.ForeignKey('club.club_id'))
     tenhou_name = db.Column(db.String(64))
 
     clubmanagement = relationship(ClubManagement, cascade="all,delete", backref="user")
@@ -50,7 +49,8 @@ class Club(db.Model):
     tenhou_room = db.Column(db.String(120), unique=False, nullable=True)
     tenhou_rules = db.Column(db.String(120), unique=False, nullable=True)
     mjsoul_room = db.Column(db.String(120), unique=False, nullable=True)
-
+    tourney_id = db.Column(db.Integer,db.ForeignKey('tourney.tourney_id'), nullable=True)    
+    
     tourneyUserlist = relationship("Tourney", cascade="all,delete", backref="tourney")    
 
     def __repr__(self):
@@ -58,23 +58,35 @@ class Club(db.Model):
 
 class Tourney(db.Model):
     tourney_id = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
-    club_id = db.Column(db.Integer, db.ForeignKey('club.club_id'), nullable=False)
-    tourney_name = db.Column(db.String(80), unique=False, nullable=True)
+    tourney_name = db.Column(db.String(128), unique=False, nullable=True)
 
     def __repr__(self):
         return '<Tourney %r>' % self.tourney_name
 
 class TenhouGame(db.Model):
     tenhou_game_id = db.Column(db.Integer, primary_key=True,nullable=False, autoincrement=True)
-    replay_url = db.Column(db.String(128), unique=True, nullable=False)    
+    replay_id = db.Column(db.String(128), unique=True, nullable=True)
+    rate = db.Column(db.String(128), unique=True, nullable=True)
+    
     ton = db.Column(db.String(80), unique=False, nullable=True)
     nan = db.Column(db.String(80), unique=False, nullable=True)
     xia = db.Column(db.String(80), unique=False, nullable=True)
     pei = db.Column(db.String(80), unique=False, nullable=True)
-    ton_score = db.Column(db.Integer ,nullable=False)
-    nan_score = db.Column(db.Integer ,nullable=False)
-    xia_score = db.Column(db.Integer ,nullable=False)
-    pei_score = db.Column(db.Integer ,nullable=False)
+    
+    ton_score = db.Column(db.Integer ,nullable=True)
+    nan_score = db.Column(db.Integer ,nullable=True)
+    xia_score = db.Column(db.Integer ,nullable=True)
+    pei_score = db.Column(db.Integer ,nullable=True)
+
+    ton_shugi = db.Column(db.Integer ,nullable=True)
+    nan_shugi = db.Column(db.Integer ,nullable=True)
+    xia_shugi = db.Column(db.Integer ,nullable=True)
+    pei_shugi = db.Column(db.Integer ,nullable=True)
+    
+    ton_payout = db.Column(db.Integer ,nullable=True)
+    nan_payout = db.Column(db.Integer ,nullable=True)
+    xia_payout = db.Column(db.Integer ,nullable=True)
+    pei_payout = db.Column(db.Integer ,nullable=True)
 
     tourneyGamelist = relationship("TourneyGameList", cascade="all,delete", backref="game")
     

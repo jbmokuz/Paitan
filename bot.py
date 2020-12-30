@@ -8,6 +8,8 @@ import copy
 import urllib
 from discord.ext.commands import has_permissions, MissingPermissions
 from database import *
+from functions import *
+from parsers.parse import getLogId
 
 if len(sys.argv) > 1:
     TOKEN = os.environ["DISCORD_DEV_TOKEN"]
@@ -157,6 +159,108 @@ async def info(ctx):
     ret += "Website: http://yakuhai.com\n\n"
     ret += "Source: https://github.com/jbmokuz/Paitan\n\n```"
     await chan.send(ret)
+
+
+
+def formatScores(scores,tableRate):
+
+    table = [["Score","","Pay","Name"]]
+
+    for row in scores:
+
+        name, score, shugi, payout = row
+        
+        score = str(score)
+        shugi = str(shugi)
+        payout = str(payout)
+        if not "-" in shugi:
+            shugi = "+"+shugi
+        if not "-" in payout:
+            payout = "+"+payout       
+        table.append([str(score),str(shugi),str(payout),str(name)])
+
+    colMax = [max([len(i) for i in c]) for c in zip(*table)]
+    colMax[-1] = 0
+    
+    ret = f"```{tableRate}\n"
+    for row in table:
+        for i,col in enumerate(colMax):
+            ret += row[i].ljust(col+1)
+        ret += "\n"
+    ret += "```"
+
+    return ret
+
+
+@bot.command()
+async def score(ctx, log=None, rate="standard", shugi=None):
+    """
+    Score a tenhou log!
+    Args:
+        log:
+            A full url or just the log id
+        rate (optional):
+            tensan(default), tengo, or tenpin
+        shugi (optional):
+            defaults to the rate shugi
+    """
+    player, chan, gi = get_vars(ctx)
+
+    if log == None or rate == None:
+        await chan.send("usage: !score [tenhou_log] [rate]\nEx: !score https://tenhou.net/0/?log=2020051313gm-0209-19713-10df4ad2&tw=1 tengo")
+        
+    
+    rate = rate.lower()
+    tableRate = None
+    
+    if rate == "tensan" or rate == "0.3" or rate == ".3":
+        tableRate = copy.deepcopy(TENSAN)
+    elif rate == "tengo" or rate == "0.5" or rate == ".5":
+        tableRate = copy.deepcopy(TENGO)
+    elif rate == "tenpin" or rate == "1.0":
+        tableRate = copy.deepcopy(TENPIN)
+    elif rate == "standard":
+        tableRate = copy.deepcopy(STANDARD)
+    else:
+        await chan.send(f"{rate} is not a valid rate (try !help score)")
+        return
+
+    if(shugi != None):
+        try:
+            tableRate.shugi = round(float(shugi),3)
+        except:
+            await chan.send(f"{shugi} is not a valid shugi")
+            return
+
+
+    players = parseTenhou(log)
+    seatOrder = [i[0] for i in players]
+    print(seatOrder)
+    scores, explain = scorePayout(players, tableRate)
+    logId = getLogId(log)
+
+
+    scoresOrdered = []
+
+    # @TODO this is really hacky
+    for i,p in enumerate(players):
+        scoresOrdered.append([x for x in scores if x[0] == seatOrder[i]][0])
+    
+    ret = createTenhouGame(logId,scoresOrdered,tableRate.name)
+    if ret == -1:
+        await chan.send("WARNING: Already scored that game! Will not be added!")
+        await chan.send("Here are results anyways")
+    
+    print(explain)    
+    await chan.send(formatScores(scores, tableRate))
+    """
+    for guild in bot.guilds:
+        for log_chan in guild.text_channels:
+            if str(log_chan) == "daily-log":
+                print("found")
+                await log_chan.send(log)
+                await log_chan.send(ret)
+    """
 
     
 @bot.command()

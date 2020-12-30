@@ -6,12 +6,14 @@ from parsers.parse import parseTenhou
 
 class TableRate():
 
-    def __init__(self, rate=0.3, shugi=.50, target=30000, start=25000, uma=[30,10,-10,-30]):
+    def __init__(self, name, rate=0.3, shugi=.50, target=30000, start=25000, uma=[30,10,-10,-30]):
+        self.name = name
         self.rate = rate
         self.shugi = shugi
-        self.oka = 0
         self.target = target
         self.start = start
+        # @ WARNING!!! Will not work for sanma
+        self.oka = (target - start)*4
         self.uma = uma
 
     def __eq__(self, other):
@@ -21,9 +23,11 @@ class TableRate():
         return f"Rate: {self.rate}, Start: {self.start}, Target: {self.target}, Shugi: {self.shugi}, Oka: {self.oka}, Uma: {self.uma}"
 
 # default values rate=0.3, shugi=.50, target=30000, start=25000, uma=[30,10,-10,-30]    
-TENSAN = TableRate()
-TENGO = TableRate(rate=0.5, shugi=1)
-TENPIN = TableRate(rate=1, shugi=2)
+TENSAN = TableRate(name="tensan")
+TENGO = TableRate(name="tengo",rate=0.5, shugi=1)
+TENPIN = TableRate(name="tenpin",rate=1, shugi=2)
+
+STANDARD = TableRate(name="standard",rate=1,shugi=0,start=30000,target=30000, uma=[15,5,-5,-15])
 
 def scorePayout(players, tableRate):
 
@@ -38,7 +42,8 @@ def scorePayout(players, tableRate):
     oka = [tableRate.oka] + [0]*len(players) # giving 1st place oka bonus
     for i, p in enumerate(players):
         name, score, shugi = p
-        lastScore += f"#{i+1}Place: (Score[{score}] + Oka[{oka[i]}] - Target[({tableRate.target}])/1000) × Rate[{tableRate.rate}] = ${((score + oka[i] - tableRate.target)/1000)*tableRate.rate:.2f}\n"
+        score = score*100
+        lastScore += f"#{i+1}Place: (Score[{score}] + Oka[{oka[i]}] - Target[({tableRate.target})])/1000) × Rate[{tableRate.rate}] = ${((score + oka[i] - tableRate.target)/1000)*tableRate.rate:.2f}\n"
 
     lastScore += "\n"            
     lastScore += f"**Uma** of {tableRate.uma} is also applied based on position, and multiplied by the table **Rate**[{tableRate.rate}]\n"

@@ -62,12 +62,26 @@ def createTourney(tourneyName):
     return t.tourney_id
 
 
-def createTenhouGame(replayUrl, ton, nan, xia, pei, tonScore, nanScore, xiaScore, peiScore):
+def createTenhouGame(replayId, scores, rate):
 
-    if db.session.query(TenhouGame).filter(TenhouGame.replay_url==replayUrl).first():
+    if db.session.query(TenhouGame).filter(TenhouGame.replay_id==replayId).first():
         return -1
     
-    g = TenhouGame(replay_url=replayUrl, ton=ton, nan=nan, xia=xia, pei=pei, ton_score=tonScore, nan_score=nanScore, xia_score=xiaScore, pei_score=peiScore)
+    name0, score0, shugi0, payout0 = scores[0]
+    name1, score1, shugi1, payout1 = scores[1]
+    name2, score2, shugi2, payout2 = scores[2]
+    if len(scores) > 3 :
+        name3, score3, shugi3, payout3 = scores[3]
+    else:
+        name3 = None
+        score3 = None
+        shugi3 = None
+        payout3 = None
+
+    g = TenhouGame(replay_id=replayId, rate=rate, ton=name0, nan=name1, xia=name2, pei=name3,
+                   ton_score=score0, nan_score=score1, xia_score=score2, pei_score=score3,
+                   ton_shugi=shugi0, nan_shugi=shugi1, xia_shugi=shugi2, pei_shugi=shugi3,
+                   ton_payout=payout0, nan_payout=payout1, xia_payout=payout2, pei_payout=payout3)
     
     db.session.add(g)
 

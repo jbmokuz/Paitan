@@ -3,7 +3,7 @@ import re
 
 # http://tenhou.net/0/?log=2020070913gm-0209-19691-21db0170&tw=2         
 
-def getLogID(log):
+def getLogId(log):
     ret = ""
     rex = re.search("log=(.*)[&]{0,1}",log)
     if rex == None:
