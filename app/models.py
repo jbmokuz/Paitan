@@ -66,7 +66,7 @@ class Tourney(db.Model):
 class TenhouGame(db.Model):
     tenhou_game_id = db.Column(db.Integer, primary_key=True,nullable=False, autoincrement=True)
     replay_id = db.Column(db.String(128), unique=True, nullable=True)
-    rate = db.Column(db.String(128), unique=True, nullable=True)
+    rate = db.Column(db.String(128), unique=False, nullable=True)
     
     ton = db.Column(db.String(80), unique=False, nullable=True)
     nan = db.Column(db.String(80), unique=False, nullable=True)
@@ -91,7 +91,7 @@ class TenhouGame(db.Model):
     tourneyGamelist = relationship("TourneyGameList", cascade="all,delete", backref="game")
     
     def __repr__(self):
-        return '<TenhouGame %r>' % self.replay_url
+        return '<TenhouGame %r>' % self.replay_id
     
 class TourneyUserList(db.Model):
     id = db.Column(db.Integer, primary_key=True,nullable=False)

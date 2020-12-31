@@ -1,4 +1,3 @@
-from objects import GameInstance
 from glob import glob
 
 from app.models import *
@@ -242,6 +241,13 @@ def getTenhouGame(tenhouGameId):
 
     game = db.session.query(TenhouGame).filter(TenhouGame.tenhou_game_id==tenhouGameId).first()
     return game
+
+## Get From ##
+
+def getUserFromTenhouName(tenhouName):
+
+    user = db.session.query(User).filter(User.tenhou_name==tenhouName).first()
+    return user
 
 ## Get For ##
 

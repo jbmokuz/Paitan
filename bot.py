@@ -1,7 +1,6 @@
 import discord, os, random
 from discord.ext import commands
 from database import *
-from objects import TENSAN, TENGO, TENPIN
 import requests, sys, re
 import xml.etree.ElementTree as ET
 import copy
@@ -112,6 +111,42 @@ async def list(ctx):
     ret += "```"
     await chan.send(ret)
     
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def shuffle(ctx):
+    """
+    Shuffle for list for tables
+    """
+    player, chan, gi = get_vars(ctx)
+    
+    if gi.tourney_id == None:
+        await chan.send("No tourney is currently running")
+        return
+    
+    users = getUsersForTourney(gi.tourney_id)
+
+    #if len(users) < 4:
+    #    await chan.send("Not enughf players for a table")
+    #    return
+
+    a = [[u.user_name,u.tenhou_name] for u in users]
+    random.shuffle(a)
+    ret = "```"
+    for i,u in enumerate(a):
+        if i %4 == 0:
+            if len(a) - i < 4:
+                ret += f"===   Byes  ===\n"
+            else:
+                ret += f"=== Table {(i//4)+1} ===\n"
+        uName, tName = u
+        if tName != None:
+            ret += u[0]+" "+u[1]
+        else:
+            ret += u[0]
+        ret += "\n"
+    ret += "```"
+    await chan.send(ret)
+
     
 @bot.command()
 async def setTenhouName(ctx, tenhouName):
@@ -121,7 +156,7 @@ async def setTenhouName(ctx, tenhouName):
     player, chan, gi = get_vars(ctx)
     ret = updateUserTenhouName(player.id, tenhouName)
     if ret < 0:
-        await chan.send(f"Error {ret}")
+        await chan.send(f"Error: Please create an account first with $createAccount")
         return
     await chan.send("Updated tenhou name!")
 
@@ -212,6 +247,8 @@ async def score(ctx, log=None, rate="standard", shugi=None):
     
     rate = rate.lower()
     tableRate = None
+
+    # Pick the proper table rate
     
     if rate == "tensan" or rate == "0.3" or rate == ".3":
         tableRate = copy.deepcopy(TENSAN)
@@ -233,23 +270,31 @@ async def score(ctx, log=None, rate="standard", shugi=None):
             return
 
 
+    # This gets the players and stuff
     players = parseTenhou(log)
+    # This is part of a hack to keep seat order
     seatOrder = [i[0] for i in players]
-    print(seatOrder)
+    # Calculates the score and also the explination of how the score was calculated
     scores, explain = scorePayout(players, tableRate)
+    # Gets the unique id for the log
     logId = getLogId(log)
-
-
-    scoresOrdered = []
-
+    
     # @TODO this is really hacky
+    scoresOrdered = []
     for i,p in enumerate(players):
         scoresOrdered.append([x for x in scores if x[0] == seatOrder[i]][0])
-    
-    ret = createTenhouGame(logId,scoresOrdered,tableRate.name)
-    if ret == -1:
+
+    # Add scores to db
+    gameId = createTenhouGame(logId,scoresOrdered,tableRate.name)
+    if gameId == -1:
         await chan.send("WARNING: Already scored that game! Will not be added!")
         await chan.send("Here are results anyways")
+    else:
+        test = getTourney(gi.tourney_id)
+        # Do we currently have a tourney?
+        if test != None and type(test) != type(1):
+            # Add the game to the tourney
+            addGameToTourney(gi.tourney_id, gameId)
     
     print(explain)    
     await chan.send(formatScores(scores, tableRate))
@@ -349,6 +394,12 @@ async def endTourney(ctx):
         tmp = getTourney(gi.tourney_id).tourney_name
     except:
         pass
+
+
+    await chan.send("Final standings")
+
+    await chan.send(getStandings(gi.tourney_id))    
+    
     
     # This really cant return -1 after calling get_vars?
     if updateClubTourney(gi.club_id, None) == -1:
@@ -356,6 +407,75 @@ async def endTourney(ctx):
         return
 
     await chan.send(f"Ended Toruney '{tmp}'")
+
+@bot.command()
+async def standings(ctx):
+    """
+    Get the standings of a current tourney!
+    """
+    player, chan, gi = get_vars(ctx)    
+    test = getTourney(gi.tourney_id)
+
+    if test == None and type(test) == type(1):
+        await chan.send("There is currently no Tourney running!")
+        return
+    
+    await chan.send(getStandings(gi.tourney_id))
+
+def getStandings(tourneyId): 
+    games = getGamesForTourney(tourneyId)
+
+    rank = {}
+    
+    for g in games:
+        if g.ton != None:
+            if not g.ton in rank:
+                rank[g.ton] = 0
+            rank[g.ton] += g.ton_payout
+
+        if g.nan != None:
+            if not g.nan in rank:
+                rank[g.nan] = 0
+            rank[g.nan] += g.nan_payout
+
+        if g.xia != None:
+            if not g.xia in rank:
+                rank[g.xia] = 0
+            rank[g.xia] += g.xia_payout
+
+        if g.pei != None:
+            if not g.pei in rank:
+                rank[g.pei] = 0
+            rank[g.pei] += g.pei_payout
+
+
+    ordered = []
+
+    for n in rank:
+        ordered.append([rank[n],n])
+    ordered.sort(key=lambda x:x[0], reverse=True)
+            
+    ret = "```"
+    ret += " Score  |  Name\n"
+    ret += "------------------\n"
+    for score, name in ordered:
+        score = str(score)
+        if not "-" in score:
+            score = " "+score
+        score = score.ljust(7)
+
+        # See if there is a user with this tenhou name
+        check = getUserFromTenhouName(name)
+        if check:
+            ret += f"{str(score)} |  {name} ({check.user_name})\n"
+        else:
+            ret += f"{str(score)} |  {name}\n"
+            
+            
+    ret += "```"
+
+    return ret
+            
     
 @bot.command(aliases=['p'])
 async def ping(ctx):
