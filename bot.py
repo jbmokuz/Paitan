@@ -103,7 +103,7 @@ async def list(ctx):
     tourney = getTourney(gi.tourney_id)
 
     ret = "```"
-    
+
     if tourney.current_round == 1:    
         users = getUsersForTourney(gi.tourney_id)
         if users == []:
@@ -116,10 +116,8 @@ async def list(ctx):
             ret += "\n"
 
     else:
-        tables = getTablesForRoundTourney(gi.tourney_id,tourney.current_round-1)
-        tables = [[i.ton, i.nan, i.xia, i.pei] for i in tables]
-        ret += f"\n\nRound: {tourney.current_round-1}\n"
-        ret += printTables(tables, gi.tourney_id, tourney.current_round-1, False)
+        ret += printTables(tourney)
+        
     ret += "```"
     await chan.send(ret)
     
@@ -139,7 +137,6 @@ async def shuffle(ctx):
     users = getUsersForTourney(gi.tourney_id)
 
     ret = "```"
-    ret += f"\n\nRound: {tourney.current_round}\n"
 
     # First round is just random
     if tourney.current_round == 1:
@@ -152,8 +149,8 @@ async def shuffle(ctx):
     # Need at least 16 people, but should still get you the least overlap?
     else:
         
-        tables = getTablesForRoundTourney(gi.tourney_id,tourney.current_round-1)
-    
+        tables = getTablesForRoundTourney(tourney.tourney_id,tourney.current_round-1)
+        
         byes = []
         
         if tables[-1].pei == None:
@@ -188,36 +185,51 @@ async def shuffle(ctx):
             count = (count + 1) % len(tables)
             
         tables += [newByes]
-            
+
+    print("COW",tables)
+        
+    for t in tables:
+        if len(t) < 4:
+            t += [None for i in range(4 - len(t))]
+        createTable(tourney.tourney_id, tourney.current_round, t[0], t[1], t[2], t[3])
+
+
+    
     # Now we print the stuff out
 
-
-    ret += printTables(tables, gi.tourney_id, tourney.current_round, True)
+    startNextRound(gi.tourney_id)
+    
+    ret += printTables(tourney)
     ret += "```"
 
-    startNextRound(gi.tourney_id)
+
     await chan.send(ret)
 
 
-def printTables(tables, tourneyId, currentRound, saveTables=False):
+def printTables(tourney):
+
     count = 1
 
     ret = ""
+
+    ret += f"\n\nRound: {tourney.current_round-1}\n"
+    
+    tables = getTablesForRoundTourney(tourney.tourney_id,tourney.current_round-1)
+
+    count += 1
     
     for table in tables:
 
-        if len(table) < 4:
+        if table.pei == None:
             ret += f"\n===   Byes  ===\n"
         else:
-            ret += f"\n=== Table {count} ===\n"
+            if table.finished:
+                ret += f"\n=== Table {count} 🌟 Finished ===\n"
+            else:
+                ret += f"\n=== Table {count} ===\n"
 
-        table += [None for i in range(4 - len(table))]
 
-        if saveTables:
-            createTable(tourneyId, currentRound, table[0], table[1], table[2], table[3])
-            
-        count += 1
-        for uId in table:
+        for uId in [table.ton, table.nan, table.xia, table.pei]:
             if uId != None:
                 user = getUser(uId)
                 if user == None and type(user) == type(int):
@@ -226,7 +238,8 @@ def printTables(tables, tourneyId, currentRound, saveTables=False):
                 if user.tenhou_name != None:
                     ret += " "+user.tenhou_name
             ret += "\n"
-    
+
+    print(ret)
 
     return ret
     

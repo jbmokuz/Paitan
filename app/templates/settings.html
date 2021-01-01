@@ -11,6 +11,22 @@
 </br>
 </br>
 
+    <h1>Set Tenhou Name</h1>
+    <form action="" method="post">
+        {{ tenhou_name_form.hidden_tag() }}
+        <p>
+            {{ tenhou_name_form.tenhouName.label }}<br>
+            {{ tenhou_name_form.tenhouName(size=8) }}<br>
+            {% for error in tenhou_name_form.tenhouName.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>{{ tenhou_name_form.submit() }}</p>
+    </form>
+
+</br>
+</br>
+
     <h1>Set Password</h1>
     <form action="" method="post">
         {{ pass_form.hidden_tag() }}
