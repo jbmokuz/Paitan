@@ -277,6 +277,11 @@ def getUserFromTenhouName(tenhouName):
     user = db.session.query(User).filter(User.tenhou_name==tenhouName).first()
     return user
 
+def getUserFromUserName(userName):
+
+    user = db.session.query(User).filter(User.user_name==userName).first()
+    return user
+
 ## Get For ##
 
 def getTablesForRoundTourney(tourneyId, roundNumber, unFinished=False):

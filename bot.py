@@ -36,8 +36,7 @@ async def createAccount(ctx):
     username = player.name+"#"+player.discriminator
     passwd = createUser(player.id,username)
     if type(passwd) == type(0):
-        print(passwd)
-        password = changePassword(player.id)
+        passwd = changePassword(player.id)
         await player.send(f"Password changed to: {passwd}")
     else:
         ret = f"Username:{username} Pass:{passwd}"
@@ -100,14 +99,27 @@ async def list(ctx):
     if gi.tourney_id == None:
         await chan.send("No tourney is currently running")
         return
-    users = getUsersForTourney(gi.tourney_id)
-    if users == []:
-        await chan.send("No users have joined")
-        return
+
+    tourney = getTourney(gi.tourney_id)
+
     ret = "```"
-    for u in users:
-        ret += u.user_name
-        ret += "\n"
+    
+    if tourney.current_round == 1:    
+        users = getUsersForTourney(gi.tourney_id)
+        if users == []:
+            await chan.send("No users have joined")
+            return
+        for u in users:
+            ret += u.user_name
+            if u.tenhou_name != None:
+                ret += " ("+u.tenhou_name+")"
+            ret += "\n"
+
+    else:
+        tables = getTablesForRoundTourney(gi.tourney_id,tourney.current_round-1)
+        tables = [[i.ton, i.nan, i.xia, i.pei] for i in tables]
+        ret += f"\n\nRound: {tourney.current_round-1}\n"
+        ret += printTables(tables, gi.tourney_id, tourney.current_round-1, False)
     ret += "```"
     await chan.send(ret)
     
@@ -127,12 +139,12 @@ async def shuffle(ctx):
     users = getUsersForTourney(gi.tourney_id)
 
     ret = "```"
-    ret += f"\n\nRound: {tourney.current_round}\n\n"
+    ret += f"\n\nRound: {tourney.current_round}\n"
 
     # First round is just random
     if tourney.current_round == 1:
 
-        random.shuffle(users)        
+        #random.shuffle(users)        
         tables = [[u.user_id for u in users[i:i+4]] for i in range(0,len(users),4)]
 
         
@@ -179,8 +191,19 @@ async def shuffle(ctx):
             
     # Now we print the stuff out
 
+
+    ret += printTables(tables, gi.tourney_id, tourney.current_round, True)
+    ret += "```"
+
+    startNextRound(gi.tourney_id)
+    await chan.send(ret)
+
+
+def printTables(tables, tourneyId, currentRound, saveTables=False):
     count = 1
 
+    ret = ""
+    
     for table in tables:
 
         if len(table) < 4:
@@ -190,8 +213,9 @@ async def shuffle(ctx):
 
         table += [None for i in range(4 - len(table))]
 
-        createTable(gi.tourney_id, tourney.current_round, table[0], table[1], table[2], table[3])
-
+        if saveTables:
+            createTable(tourneyId, currentRound, table[0], table[1], table[2], table[3])
+            
         count += 1
         for uId in table:
             if uId != None:
@@ -202,12 +226,9 @@ async def shuffle(ctx):
                 if user.tenhou_name != None:
                     ret += " "+user.tenhou_name
             ret += "\n"
+    
 
-
-    ret += "```"
-    startNextRound(gi.tourney_id)
-    await chan.send(ret)
-
+    return ret
     
 @bot.command()
 async def setTenhouName(ctx, tenhouName):
@@ -351,14 +372,16 @@ async def score(ctx, log=None, rate="standard", shugi=None):
         await chan.send("WARNING: Already scored that game! Will not be added!")
         await chan.send("Here are results anyways")
     else:
-        test = getTourney(gi.tourney_id)
+        tourney = getTourney(gi.tourney_id)
+
         # Do we currently have a tourney?
-        if test != None and type(test) != type(1):
+        if tourney != None and type(tourney) != type(1):
             # Add the game to the tourney
             addGameToTourney(gi.tourney_id, gameId)
-    
+
     print(explain)    
     await chan.send(formatScores(scores, tableRate))
+    
     """
     for guild in bot.guilds:
         for log_chan in guild.text_channels:
@@ -385,7 +408,7 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, randomSeat="true"):
 
     player_names = [p1,p2,p3,p4]
 
-    print(f"Starting, Admin:{gi.adminPage} Rules:{gi.rules}")
+    print(f"Starting, Admin:{gi.tenhou_room} Rules:{gi.tenhou_rules}")
     
     data = {
         "L":gi.tenhou_room,
@@ -400,11 +423,14 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, randomSeat="true"):
         
     data["M"] = "\r\n".join(player_names)
 
+    #import pdb
+    #pdb.set_trace()
+    
     resp = requests.post('https://tenhou.net/cs/edit/start.cgi',data=data)
     if resp.status_code != 200:
         await chan.send(f"http error {resp.status_code} :<")
         return
-    await chan.send(urllib.parse.unquote("&".join(resp.url.split("&")[1:])))
+    await chan.send(urllib.parse.unquote(resp.text))
 
 @bot.command()
 @commands.has_permissions(administrator=True)

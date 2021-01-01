@@ -2,7 +2,7 @@ from app import app
 from flask import render_template, flash, redirect,  url_for
 from flask_login import current_user, login_user, logout_user
 from app.models import *
-from app.forms import LoginForm, PasswordForm, TenhouForm
+from app.forms import *
 from app import db
 from database import *
 
@@ -34,14 +34,23 @@ def logout():
 def settings():
     if current_user.is_authenticated:
         clubs = getClubsForUser(current_user.user_id)
+        tenhou_name_form = TenhouNameForm()
         pass_form = PasswordForm()
+
+        if tenhou_name_form.validate_on_submit():
+            print("tenhou name")
+            current_user.tenhou_name = tenhou_name_form.tenhouName.data
+            db.session.commit()
+            return redirect(url_for('index'))
+        
         if pass_form.validate_on_submit():
             print("password")
             current_user.set_password(pass_form.password.data)
-            current_user.user_name
             db.session.commit()
+            flash("Password Updated")
             return redirect(url_for('index'))
-        return render_template('settings.html', title='Register',pass_form=pass_form, clubs=clubs)
+        
+        return render_template('settings.html', title='Register',pass_form=pass_form, clubs=clubs, tenhou_name_form=tenhou_name_form)
     return redirect(url_for('index'))
 
 @app.route("/club_settings/<path:club_id>", methods=['GET','POST'])
@@ -49,20 +58,21 @@ def club_settings(club_id):
     if current_user.is_authenticated:
 
         tenhou_form = TenhouForm()
+        rate_form = RateForm()
+        
+        #try:
+        club_id = int(club_id)
+        if club_id in [i.club_id for i in getClubsForUserManage(current_user.user_id)]:
 
-        try:
-            club_id = int(club_id)
-            if club_id in [i.club_id for i in getClubsManageForUser(current_user.user_id)]:
-
-                club = getClub(club_id)
-                if tenhou_form.validate_on_submit():
-                        club.tenhou_room = tenhou_form.admin_page.data.split("?")[-1]
-                        club.tenhou_rules = tenhou_form.rules.data
-                        db.session.commit()
-                        print("tenhou")
-                        return redirect(url_for('club_settings',club_id=club_id))
-                return render_template('club_settings.html',club=club, tenhou_form=tenhou_form)
-        except:
-            pass
+            club = getClub(club_id)
+            if tenhou_form.validate_on_submit():
+                    club.tenhou_room = tenhou_form.admin_page.data.split("?")[-1]
+                    club.tenhou_rules = tenhou_form.rules.data
+                    db.session.commit()
+                    print("tenhou")
+                    return redirect(url_for('club_settings',club_id=club_id))
+            return render_template('club_settings.html',club=club, tenhou_form=tenhou_form, rate_form=rate_form)
+        #except:
+        #    pass
         
     return redirect(url_for('index'))

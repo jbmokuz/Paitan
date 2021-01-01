@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from wtforms import *
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
 from app.models import User
 import re
@@ -14,8 +14,11 @@ class PasswordForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     password2 = PasswordField(
         'Repeat Password', validators=[DataRequired(), EqualTo('password')])
-    submit = SubmitField('Register')
+    submit = SubmitField('Change Password')
 
+class TenhouNameForm(FlaskForm):
+    tenhouName = StringField('Tenhou User Name')
+    submit = SubmitField('Update User Name')
 
 class TenhouForm(FlaskForm):
 
@@ -33,6 +36,10 @@ class TenhouForm(FlaskForm):
     admin_page = StringField('Admin Page', validators=[DataRequired(),validate_admin_page])
     rules = StringField(
         'Rules', validators=[DataRequired(),validate_rules])
-    submit = SubmitField('Register')
+    submit = SubmitField('Update')
 
+
+class RateForm(FlaskForm):
+    myField = SelectField(u'Select Default Rate', choices = ["Standard","Tensan","Tengo","TenPin"])
+    submit = SubmitField('Update')
             
