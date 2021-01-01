@@ -52,7 +52,7 @@ def createTourney(tourneyName):
     if db.session.query(Tourney).filter(Tourney.tourney_name==tourneyName).first() != None:
         return -1
     
-    t = Tourney(tourney_name=tourneyName)
+    t = Tourney(tourney_name=tourneyName, current_round=1)
     db.session.add(t)
 
     #Needed to add increment
@@ -89,7 +89,21 @@ def createTenhouGame(replayId, scores, rate):
     
     return g.tenhou_game_id
     
- 
+
+
+def createTable(tourneyId, roundNumber, ton, nan, xia, pei):
+
+    # No check for multiple tables as you could be playing more then one table at the same time
+    
+    table = TableList(tourney_id = tourneyId, round_number = roundNumber, ton=ton, nan=nan, xia=xia, pei=pei, finished=0)
+    db.session.add(table)
+
+    #Needed to add increment
+    db.session.commit()
+    
+    return table.table_id
+
+
 ## ADD ##  
 
 @saveInstance
@@ -190,6 +204,15 @@ def deleteTenhouGame(tenhouGameId):
     db.session.delete(ret)
     return 0
 
+@saveInstance
+def deleteTable(tableId):
+
+    ret = db.session.query(TableList).filter(TableList.table_id==tableId).first()
+    if not ret:
+        return -1
+    db.session.delete(ret)
+    return 0
+
     
 ## Remove ##
 
@@ -242,6 +265,11 @@ def getTenhouGame(tenhouGameId):
     game = db.session.query(TenhouGame).filter(TenhouGame.tenhou_game_id==tenhouGameId).first()
     return game
 
+def getTable(tableId):
+
+    table = db.session.query(TableList).filter(TableList.table_id==tableId).first()
+    return table
+
 ## Get From ##
 
 def getUserFromTenhouName(tenhouName):
@@ -250,6 +278,18 @@ def getUserFromTenhouName(tenhouName):
     return user
 
 ## Get For ##
+
+def getTablesForRoundTourney(tourneyId, roundNumber, unFinished=False):
+
+    ret = []
+
+    for table in db.session.query(TableList).filter(TableList.tourney_id==tourneyId, TableList.round_number==roundNumber):
+        if unFinished:
+            if table.finished == 0:
+                ret.append(table)
+        else:    
+            ret.append(table)
+    return ret
 
 def getClubsForUserManage(userId):
     
@@ -336,3 +376,17 @@ def changePassword(userId):
     u.set_password(password)
     return password
 
+@saveInstance
+def finishTable(tableId,finished=1):
+    table = getTable(tableId)
+    if table == None:
+        return -1
+    table.finished = finished
+    return 0
+
+@saveInstance
+def startNextRound(tourneyId):
+    tourney = getTourney(tourneyId)
+    if tourney == None:
+        return -1
+    tourney.current_round = tourney.current_round + 1

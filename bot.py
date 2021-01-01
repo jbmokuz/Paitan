@@ -122,29 +122,90 @@ async def shuffle(ctx):
     if gi.tourney_id == None:
         await chan.send("No tourney is currently running")
         return
-    
+
+    tourney = getTourney(gi.tourney_id)
     users = getUsersForTourney(gi.tourney_id)
 
-    #if len(users) < 4:
-    #    await chan.send("Not enughf players for a table")
-    #    return
-
-    a = [[u.user_name,u.tenhou_name] for u in users]
-    random.shuffle(a)
     ret = "```"
-    for i,u in enumerate(a):
-        if i %4 == 0:
-            if len(a) - i < 4:
-                ret += f"===   Byes  ===\n"
-            else:
-                ret += f"=== Table {(i//4)+1} ===\n"
-        uName, tName = u
-        if tName != None:
-            ret += u[0]+" "+u[1]
+    ret += f"\n\nRound: {tourney.current_round}\n\n"
+
+    # First round is just random
+    if tourney.current_round == 1:
+
+        random.shuffle(users)        
+        tables = [[u.user_id for u in users[i:i+4]] for i in range(0,len(users),4)]
+
+        
+    # We want to ensure no one plays anyone they played the first round
+    # Need at least 16 people, but should still get you the least overlap?
+    else:
+        
+        tables = getTablesForRoundTourney(gi.tourney_id,tourney.current_round-1)
+    
+        byes = []
+        
+        if tables[-1].pei == None:
+            byes = tables[-1]
+            byes = [byes.ton, byes.nan, byes.xia, byes.pei]
+            tables = tables[:-1]
+
+        tables = [[i.ton, i.nan, i.xia, i.pei] for i in tables]
+
+        random.shuffle(tables)
+        
+        for t in tables:
+            random.shuffle(t)
+
+        # Make it so the tables have no repeating players
+        for off in range(1,4):
+            tmp = [[] for i in tables]
+            for i,t in enumerate(tables):
+                tmp[i] += tables[i][:off]
+                tmp[i] += tables[(i+1)%len(tables)][off:]
+            tables = tmp
+
+        count = 0
+        newByes = []
+
+        for i, b in enumerate(byes):
+            if b == None:
+                break
+            tmp = tables[count][i]
+            tables[count][i] = b
+            newByes.append(tmp)
+            count = (count + 1) % len(tables)
+            
+        tables += [newByes]
+            
+    # Now we print the stuff out
+
+    count = 1
+
+    for table in tables:
+
+        if len(table) < 4:
+            ret += f"\n===   Byes  ===\n"
         else:
-            ret += u[0]
-        ret += "\n"
+            ret += f"\n=== Table {count} ===\n"
+
+        table += [None for i in range(4 - len(table))]
+
+        createTable(gi.tourney_id, tourney.current_round, table[0], table[1], table[2], table[3])
+
+        count += 1
+        for uId in table:
+            if uId != None:
+                user = getUser(uId)
+                if user == None and type(user) == type(int):
+                    print (f"Error getting user {uId} {user}")
+                ret += user.user_name
+                if user.tenhou_name != None:
+                    ret += " "+user.tenhou_name
+            ret += "\n"
+
+
     ret += "```"
+    startNextRound(gi.tourney_id)
     await chan.send(ret)
 
     

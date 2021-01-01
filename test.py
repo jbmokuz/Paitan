@@ -172,6 +172,70 @@ class TestDB(unittest.TestCase):
 
         deleteClub(11)
         deleteClub(13)
+
+
+    def testShuffle(self):
+
+        deleteUser(1)
+        deleteUser(2)
+        deleteUser(3)
+        deleteUser(4)
+        deleteUser(5)
+        deleteUser(6)
+        deleteUser(7)
+        deleteUser(8)
+        deleteUser(9)
+        deleteUser(10)
+
+        deleteClub(11)
+        
+        passwd1 = createUser(1,"User1")
+        passwd2 = createUser(2,"User2")
+        passwd3 = createUser(3,"User3")
+        passwd4 = createUser(4,"User4")
+        passwd5 = createUser(5,"User5")
+        passwd6 = createUser(6,"User6")
+        passwd7 = createUser(7,"User7")
+        passwd8 = createUser(8,"User8")
+        passwd9 = createUser(9,"User9")
+        passwd10 = createUser(10,"User10")
+
+
+        createClub(11,"TestClub1")
+
+        t1 = createTourney("Club1 Tourney1"+str(random.randint(0,0xFFFFFFFF)))
+        
+        tourney = getTourney(t1)
+
+        
+        tbl1 = createTable(t1, tourney.current_round, 1, 2, 3, 4)
+        tbl2 = createTable(t1, tourney.current_round, 5, 6, 7, 8)
+        tbl3 = createTable(t1, tourney.current_round, 9, 10, None, None)
+
+        print(tbl1)
+        print(tbl2)
+        print(tbl3)
+
+        tables = getTablesForRoundTourney(t1, 1)
+
+        self.assertEquals(len(tables),3)
+        
+        finishTable(tbl2)
+
+        tables = getTablesForRoundTourney(t1, 1)
+
+        self.assertEquals(len(tables),3)
+        
+        tables = getTablesForRoundTourney(t1, 1,True)
+        
+        self.assertEquals(len(tables),2)
+        
+        deleteTourney(t1)
+        deleteTable(tbl1)
+        deleteTable(tbl2)
+        deleteTable(tbl3)
+
+
         
 """
 class TestLobby(unittest.TestCase):

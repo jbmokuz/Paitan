@@ -59,6 +59,7 @@ class Club(db.Model):
 class Tourney(db.Model):
     tourney_id = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
     tourney_name = db.Column(db.String(128), unique=False, nullable=True)
+    current_round = db.Column(db.Integer, unique=False, nullable=True)
 
     def __repr__(self):
         return '<Tourney %r>' % self.tourney_name
@@ -103,4 +104,14 @@ class TourneyGameList(db.Model):
     #@WARNING You need an underscore?!?!?!?!?!?!?
     tenhou_game_id = db.Column(db.Integer, db.ForeignKey('tenhou_game.tenhou_game_id'),nullable=False)
     tourney_id = db.Column(db.Integer,db.ForeignKey('tourney.tourney_id'), nullable=False)
-    
+
+# For a list of the table by user id
+class TableList(db.Model):
+    table_id = db.Column(db.Integer, primary_key=True,nullable=False,autoincrement=True)
+    tourney_id = db.Column(db.Integer,db.ForeignKey('tourney.tourney_id'), nullable=False)
+    round_number = db.Column(db.Integer, nullable=False)
+    finished = db.Column(db.Integer, nullable=False)
+    ton = db.Column(db.Integer, db.ForeignKey('user.user_id'),nullable=True)
+    nan = db.Column(db.Integer, db.ForeignKey('user.user_id'),nullable=True)
+    xia = db.Column(db.Integer, db.ForeignKey('user.user_id'),nullable=True)
+    pei = db.Column(db.Integer, db.ForeignKey('user.user_id'),nullable=True)
