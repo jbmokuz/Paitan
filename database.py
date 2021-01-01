@@ -282,6 +282,19 @@ def getUserFromUserName(userName):
     user = db.session.query(User).filter(User.user_name==userName).first()
     return user
 
+def getTablesFromScore(tourney, players):
+    tables = {}
+    print(players)
+    for p in players:
+        user = getUserFromTenhouName(p)
+        if user:
+            u = user.user_id
+            table = db.session.query(TableList).filter(TableList.tourney_id==tourney.tourney_id,
+                TableList.round_number==(tourney.current_round-1),
+                (TableList.ton==u)|(TableList.nan==u)|(TableList.xia==u)|(TableList.pei==u)).first()
+            tables[table.table_id] = table
+    return tables
+
 ## Get For ##
 
 def getTablesForRoundTourney(tourneyId, roundNumber, unFinished=False):

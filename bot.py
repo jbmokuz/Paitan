@@ -141,7 +141,7 @@ async def shuffle(ctx):
     # First round is just random
     if tourney.current_round == 1:
 
-        #random.shuffle(users)        
+        random.shuffle(users)        
         tables = [[u.user_id for u in users[i:i+4]] for i in range(0,len(users),4)]
 
         
@@ -381,16 +381,23 @@ async def score(ctx, log=None, rate="standard", shugi=None):
 
     # Add scores to db
     gameId = createTenhouGame(logId,scoresOrdered,tableRate.name)
+    tourney = getTourney(gi.tourney_id)
+
+    
     if gameId == -1:
         await chan.send("WARNING: Already scored that game! Will not be added!")
         await chan.send("Here are results anyways")
+        
     else:
-        tourney = getTourney(gi.tourney_id)
-
         # Do we currently have a tourney?
         if tourney != None and type(tourney) != type(1):
             # Add the game to the tourney
             addGameToTourney(gi.tourney_id, gameId)
+            tables = getTablesFromScore(tourney,[i[0] for i in players])
+            if len(tables.keys()) > 1:
+                await chan.send("WARNING: Players are not all at the same table!")
+            else:
+                finishTable([i for i in tables.keys()][0])
 
     print(explain)    
     await chan.send(formatScores(scores, tableRate))
@@ -436,9 +443,6 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, randomSeat="true"):
         
     data["M"] = "\r\n".join(player_names)
 
-    #import pdb
-    #pdb.set_trace()
-    
     resp = requests.post('https://tenhou.net/cs/edit/start.cgi',data=data)
     if resp.status_code != 200:
         await chan.send(f"http error {resp.status_code} :<")
