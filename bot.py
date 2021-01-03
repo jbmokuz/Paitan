@@ -590,8 +590,8 @@ async def endTourney(ctx):
     await chan.send(f"Ended Toruney '{tmp}'")
 
 
-@bot.command()
-async def standings(ctx):
+@bot.command(aliases=['standings',"scores"]))
+async def rankings(ctx):
     """
     Get the standings of a current tourney!
     """
