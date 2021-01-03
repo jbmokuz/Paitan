@@ -14,16 +14,27 @@ def saveInstance(fun):
         return ret
     return wrapper
 
-## Create ###
+LAST_ERROR = "No Error"
+
+def getError():
+    global LAST_ERROR
+    tmp = "ERROR: "+LAST_ERROR
+    LAST_ERROR = "No Error"
+    return tmp
+
+## Create ##
 
 @saveInstance
 def createUser(userId,userName):
+    global LAST_ERROR
 
     if db.session.query(User).filter(User.user_name==userName).first():
-        return -1
+        LAST_ERROR = f"User name '{userName}' already taken"
+        return None
     
     if db.session.query(User).filter(User.user_id==userId).first():
-        return -2
+        LAST_ERROR = f"User with your id '{userId}' is already registered"        
+        return None
 
     
     password = ''.join([random.choice(string.printable[:62]) for i in range(16)])
@@ -36,35 +47,44 @@ def createUser(userId,userName):
 @saveInstance
 def createClub(clubId,clubName):
 
+    global LAST_ERROR
+    
     if db.session.query(Club).filter(Club.club_name==clubName).first():
-        return -1
+        LAST_ERROR = f"Club with name '{clubName}', Already registered"
+        return None
     
     if db.session.query(Club).filter(Club.club_id==clubId).first():
-        return -2
+        LAST_ERROR = f"Club with id '{clubId}', Already registered"
+        return None
     
     c = Club(club_id=clubId,club_name=clubName)
     db.session.add(c)
     return c.club_id
 
 
+# does not work with save instance decorator
 def createTourney(tourneyName):
 
-    if db.session.query(Tourney).filter(Tourney.tourney_name==tourneyName).first() != None:
-        return -1
+    global LAST_ERROR
     
-    t = Tourney(tourney_name=tourneyName, current_round=1)
+    if db.session.query(Tourney).filter(Tourney.tourney_name==tourneyName).first() != None:
+        LAST_ERROR = "Already have a tourney by that name"
+        return None
+    
+    t = Tourney(tourney_name=tourneyName, current_round=0)
     db.session.add(t)
 
     #Needed to add increment
     db.session.commit()
 
-    return t.tourney_id
+    return t
 
 
 def createTenhouGame(replayId, scores, rate):
 
     if db.session.query(TenhouGame).filter(TenhouGame.replay_id==replayId).first():
-        return -1
+        LAST_ERROR = "Already scored that game! Will not be added!"
+        return None
     
     name0, score0, shugi0, payout0 = scores[0]
     name1, score1, shugi1, payout1 = scores[1]
@@ -87,7 +107,7 @@ def createTenhouGame(replayId, scores, rate):
     #Needed to add increment
     db.session.commit()
     
-    return g.tenhou_game_id
+    return g
     
 
 
@@ -108,14 +128,19 @@ def createTable(tourneyId, roundNumber, ton, nan, xia, pei):
 
 @saveInstance
 def addUserToClubManage(guildId,userId):
+    global LAST_ERROR
+    
     u = db.session.query(User).filter(User.user_id==userId).first()
     if u == None:
-        return -1
+        LAST_ERROR = "You are not registered! Please create an account ($createAccount)"
+        return None
     c = db.session.query(Club).filter(Club.club_id==guildId).first()
     if c == None:
-        return -2
+        LAST_ERROR = "No such club"
+        return None
     if db.session.query(ClubManagement).filter(ClubManagement.user_id==userId,ClubManagement.club_id==guildId).first():
-        return -3
+        LAST_ERROR = "You already manage this club"
+        return None        
     cm = ClubManagement(club_id=guildId,user_id=userId)
     db.session.add(cm)
     return 0
@@ -124,12 +149,15 @@ def addUserToClubManage(guildId,userId):
 def addUserToClub(guildId,userId):
     u = db.session.query(User).filter(User.user_id==userId).first()
     if u == None:
-        return -1
+        LAST_ERROR = "You are not registered! Please create an account ($createAccount)"
+        return None        
     c = db.session.query(Club).filter(Club.club_id==guildId).first()
     if c == None:
-        return -2
+        LAST_ERROR = "No such club"
+        return None        
     if db.session.query(ClubList).filter(ClubList.user_id==userId,ClubList.club_id==guildId).first():
-        return -3
+        LAST_ERROR = "You already a member of this club"
+        return None                
     cl = ClubList(club_id=guildId,user_id=userId)
     db.session.add(cl)
     return 0
@@ -138,12 +166,15 @@ def addUserToClub(guildId,userId):
 def addUserToTourney(tourneyId,userId):
     u = db.session.query(User).filter(User.user_id==userId).first()
     if u == None:
-        return -1
+        LAST_ERROR = "You are not registered! Please create an account ($createAccount)"
+        return None                
     c = db.session.query(Tourney).filter(Tourney.tourney_id==tourneyId).first()
     if c == None:
-        return -2
+        LAST_ERROR = "No such tourney"
+        return None                
     if db.session.query(TourneyUserList).filter(TourneyUserList.user_id==userId,TourneyUserList.tourney_id==tourneyId).first():
-        return -3
+        LAST_ERROR = "You already part of this tourney"
+        return None                        
     cl = TourneyUserList(tourney_id=tourneyId,user_id=userId)
     db.session.add(cl)
     return 0
@@ -151,14 +182,20 @@ def addUserToTourney(tourneyId,userId):
 
 @saveInstance
 def addGameToTourney(tourneyId, tenhouGameId):
+    global LAST_ERROR
+    
     c = db.session.query(Tourney).filter(Tourney.tourney_id==tourneyId).first()
     if c == None:
-        return -1
+        LAST_ERROR = "No such tourney"
+        return None
     u = db.session.query(TenhouGame).filter(TenhouGame.tenhou_game_id==tenhouGameId).first()
     if u == None:
-        return -2
+        LAST_ERROR = "No such game"
+        return None
     if db.session.query(TourneyGameList).filter(TourneyGameList.tourney_id==tourneyId,TourneyGameList.tenhou_game_id==tenhouGameId).first():
-        return -3
+        LAST_ERROR = "Game already added"
+        return None
+    
     cl = TourneyGameList(tourney_id=tourneyId,tenhou_game_id=tenhouGameId)
     db.session.add(cl)
     return 0
@@ -168,48 +205,58 @@ def addGameToTourney(tourneyId, tenhouGameId):
 
 @saveInstance
 def deleteClub(clubId):
-
+    global LAST_ERROR
+    
     ret = db.session.query(Club).filter(Club.club_id==clubId).first()
     if not ret:
-        return -1
+        LAST_ERROR = "No such club"
+        return None
     db.session.delete(ret)
     return 0
     
 @saveInstance
 def deleteUser(userId):
-
+    global LAST_ERROR
+    
     ret = db.session.query(User).filter(User.user_id==userId).first()
     if not ret:
-        return -1
+        LAST_ERROR = "No such user"
+        return None        
     db.session.delete(ret)
     return 0
 
 
 @saveInstance
 def deleteTourney(tourneyId):
-
+    global LAST_ERROR
+    
     ret = db.session.query(Tourney).filter(Tourney.tourney_id==tourneyId).first()
     if not ret:
-        return -1
+        LAST_ERROR = "No such tourney"
+        return None
     db.session.delete(ret)
     return 0
 
 
 @saveInstance
 def deleteTenhouGame(tenhouGameId):
-
+    global LAST_ERROR
+    
     ret = db.session.query(TenhouGame).filter(TenhouGame.tenhou_game_id==tenhouGameId).first()
     if not ret:
-        return -1
+        LAST_ERROR = "No such game"
+        return None
     db.session.delete(ret)
     return 0
 
 @saveInstance
 def deleteTable(tableId):
-
+    global LAST_ERROR
+    
     ret = db.session.query(TableList).filter(TableList.table_id==tableId).first()
     if not ret:
-        return -1
+        LAST_ERROR = "No such table"
+        return None
     db.session.delete(ret)
     return 0
 
@@ -219,18 +266,23 @@ def deleteTable(tableId):
 @saveInstance
 def removeUserFromClub(guildId,userId):
 
+    global LAST_ERROR
+    
     member = db.session.query(ClubList).filter(ClubList.user_id==userId,ClubList.club_id==guildId).first()
-    if not member:
-        return -1
+    if not member: 
+        LAST_ERROR = "No such club or user"
+        return None       
     return db.session.delete(member)
 
 
 @saveInstance
 def removeUserFromClubManage(guildId,userId):
-
+    global LAST_ERROR
+    
     member = db.session.query(ClubManage).filter(ClubManage.user_id==userId,ClubManage.club_id==guildId).first()
     if not member:
-        return -1
+        LAST_ERROR = "No such club or user"
+        return None
     return db.session.delete(member)
     
     
@@ -239,7 +291,8 @@ def removeUserFromTourney(tourneyId,userId):
 
     member = db.session.query(TourneyUserList).filter(TourneyUserList.user_id==userId,TourneyUserList.tourney_id==tourneyId).first()
     if not member:
-        return -1
+        LAST_ERROR  = "Could not remove user from tourney"
+        return None
     return db.session.delete(member)
 
 
@@ -290,9 +343,10 @@ def getTablesFromScore(tourney, players):
         if user:
             u = user.user_id
             table = db.session.query(TableList).filter(TableList.tourney_id==tourney.tourney_id,
-                TableList.round_number==(tourney.current_round-1),
+                TableList.round_number==(tourney.current_round),
                 (TableList.ton==u)|(TableList.nan==u)|(TableList.xia==u)|(TableList.pei==u)).first()
             tables[table.table_id] = table
+
     return tables
 
 ## Get For ##
@@ -350,9 +404,9 @@ def getUsersForTourney(tourneyId):
 
     ret = []
     for t in db.session.query(TourneyUserList).filter(TourneyUserList.tourney_id==tourneyId):
-        test = getUser(t.user_id)
-        if test != None:
-            ret.append(test)
+        user = getUser(t.user_id)
+        if user != None:
+            ret.append(user)
     return ret
     
     
@@ -371,14 +425,18 @@ def getGamesForTourney(tourneyId):
 def updateClubTourney(clubId, tourneyId):
     club = getClub(clubId)
     if club == None:
-        return -1
+        LAST_ERROR = "No such club"
+        return None
     club.tourney_id = tourneyId
 
 @saveInstance
 def updateUserTenhouName(userId, tenhouName):
+    global LAST_ERROR
+    
     user = getUser(userId)
     if user == None:
-        return -1
+        LAST_ERROR = "You are not registered! Please create an account ($createAccount)"
+        return None
     user.tenhou_name = tenhouName
     return 0
 
@@ -388,7 +446,8 @@ def updateUserTenhouName(userId, tenhouName):
 def changePassword(userId):
     u = db.session.query(User).filter(User.user_id==userId).first()
     if not u:
-        return -1
+        LAST_ERROR = "You are not registered! Please create an account ($createAccount)"
+        return None
 
     password = ''.join([random.choice(string.printable[:62]) for i in range(16)])
     u.set_password(password)
