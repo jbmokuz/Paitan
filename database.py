@@ -46,7 +46,6 @@ def createUser(userId,userName):
     
 @saveInstance
 def createClub(clubId,clubName):
-
     global LAST_ERROR
     
     if db.session.query(Club).filter(Club.club_name==clubName).first():
@@ -64,7 +63,6 @@ def createClub(clubId,clubName):
 
 # does not work with save instance decorator
 def createTourney(tourneyName):
-
     global LAST_ERROR
     
     if db.session.query(Tourney).filter(Tourney.tourney_name==tourneyName).first() != None:
@@ -80,9 +78,10 @@ def createTourney(tourneyName):
     return t
 
 
-def createTenhouGame(replayId, scores, rate):
+def createTenhouGame(replayId, scores, rate, roundNumber=0):
+    global LAST_ERROR
 
-    if db.session.query(TenhouGame).filter(TenhouGame.replay_id==replayId).first():
+    if replayId != None and db.session.query(TenhouGame).filter(TenhouGame.replay_id==replayId).first():
         LAST_ERROR = "Already scored that game! Will not be added!"
         return None
     
@@ -96,12 +95,17 @@ def createTenhouGame(replayId, scores, rate):
         score3 = None
         shugi3 = None
         payout3 = None
-
-    g = TenhouGame(replay_id=replayId, rate=rate, ton=name0, nan=name1, xia=name2, pei=name3,
+    if replayId != None:
+        g = TenhouGame(replay_id=replayId, rate=rate, ton=name0, nan=name1, xia=name2, pei=name3,
                    ton_score=score0, nan_score=score1, xia_score=score2, pei_score=score3,
                    ton_shugi=shugi0, nan_shugi=shugi1, xia_shugi=shugi2, pei_shugi=shugi3,
-                   ton_payout=payout0, nan_payout=payout1, xia_payout=payout2, pei_payout=payout3)
-    
+                   ton_payout=payout0, nan_payout=payout1, xia_payout=payout2, pei_payout=payout3, round_number=roundNumber)
+    else:
+        g = TenhouGame(rate=rate, ton=name0, nan=name1, xia=name2, pei=name3,
+                   ton_score=score0, nan_score=score1, xia_score=score2, pei_score=score3,
+                   ton_shugi=shugi0, nan_shugi=shugi1, xia_shugi=shugi2, pei_shugi=shugi3,
+                   ton_payout=payout0, nan_payout=payout1, xia_payout=payout2, pei_payout=payout3, round_number=roundNumber)
+
     db.session.add(g)
 
     #Needed to add increment
@@ -147,6 +151,8 @@ def addUserToClubManage(guildId,userId):
 
 @saveInstance
 def addUserToClub(guildId,userId):
+    global LAST_ERROR
+    
     u = db.session.query(User).filter(User.user_id==userId).first()
     if u == None:
         LAST_ERROR = "You are not registered! Please create an account ($createAccount)"
@@ -164,11 +170,14 @@ def addUserToClub(guildId,userId):
     
 @saveInstance
 def addUserToTourney(tourneyId,userId):
+    global LAST_ERROR
+    
     u = db.session.query(User).filter(User.user_id==userId).first()
     if u == None:
         LAST_ERROR = "You are not registered! Please create an account ($createAccount)"
         return None                
     c = db.session.query(Tourney).filter(Tourney.tourney_id==tourneyId).first()
+
     if c == None:
         LAST_ERROR = "No such tourney"
         return None                
@@ -176,6 +185,27 @@ def addUserToTourney(tourneyId,userId):
         LAST_ERROR = "You already part of this tourney"
         return None                        
     cl = TourneyUserList(tourney_id=tourneyId,user_id=userId)
+    db.session.add(cl)
+    return 0
+
+@saveInstance
+def addGameToClub(clubId, tenhouGameId):
+    global LAST_ERROR
+    
+    c = db.session.query(Club).filter(Club.club_id==clubId).first()
+    if c == None:
+        LAST_ERROR = "No such club"
+        return None
+    u = db.session.query(TenhouGame).filter(TenhouGame.tenhou_game_id==tenhouGameId).first()
+    if u == None:
+        LAST_ERROR = "No such game"
+        return None
+
+    if db.session.query(ClubGameList).filter(ClubGameList.club_id==clubId,ClubGameList.tenhou_game_id==tenhouGameId).first():
+        LAST_ERROR = "Game already added"
+        return None
+    
+    cl = ClubGameList(club_id=clubId,tenhou_game_id=tenhouGameId)
     db.session.add(cl)
     return 0
 
@@ -192,6 +222,7 @@ def addGameToTourney(tourneyId, tenhouGameId):
     if u == None:
         LAST_ERROR = "No such game"
         return None
+
     if db.session.query(TourneyGameList).filter(TourneyGameList.tourney_id==tourneyId,TourneyGameList.tenhou_game_id==tenhouGameId).first():
         LAST_ERROR = "Game already added"
         return None
@@ -265,14 +296,14 @@ def deleteTable(tableId):
 
 @saveInstance
 def removeUserFromClub(guildId,userId):
-
     global LAST_ERROR
     
     member = db.session.query(ClubList).filter(ClubList.user_id==userId,ClubList.club_id==guildId).first()
     if not member: 
         LAST_ERROR = "No such club or user"
         return None       
-    return db.session.delete(member)
+    db.session.delete(member)
+    return 0
 
 
 @saveInstance
@@ -283,17 +314,20 @@ def removeUserFromClubManage(guildId,userId):
     if not member:
         LAST_ERROR = "No such club or user"
         return None
-    return db.session.delete(member)
+    db.session.delete(member)
+    return 0
     
     
 @saveInstance
 def removeUserFromTourney(tourneyId,userId):
-
+    global LAST_ERROR
+    
     member = db.session.query(TourneyUserList).filter(TourneyUserList.user_id==userId,TourneyUserList.tourney_id==tourneyId).first()
     if not member:
         LAST_ERROR  = "Could not remove user from tourney"
         return None
-    return db.session.delete(member)
+    db.session.delete(member)
+    return 0
 
 
 ## Get ##
@@ -345,11 +379,30 @@ def getTablesFromScore(tourney, players):
             table = db.session.query(TableList).filter(TableList.tourney_id==tourney.tourney_id,
                 TableList.round_number==(tourney.current_round),
                 (TableList.ton==u)|(TableList.nan==u)|(TableList.xia==u)|(TableList.pei==u)).first()
+            if table == None:
+                print(f"No such user {p}")
+                continue
             tables[table.table_id] = table
 
     return tables
 
+
+def getTourneys():
+    ret = []
+    for t in db.session.query(Tourney):
+        ret.append(t)
+    return ret
+
+def getClubs():
+    ret = []
+    for c in db.session.query(Club):
+        ret.append(c)
+    return ret
+
+
+
 ## Get For ##
+
 
 def getTablesForRoundTourney(tourneyId, roundNumber, unFinished=False):
 
@@ -361,6 +414,14 @@ def getTablesForRoundTourney(tourneyId, roundNumber, unFinished=False):
                 ret.append(table)
         else:    
             ret.append(table)
+    return ret
+
+
+def getAllClubs():
+    
+    ret = []
+    for club in db.session.query(Club):
+        ret.append(club)
     return ret
 
 def getClubsForUserManage(userId):
@@ -419,15 +480,28 @@ def getGamesForTourney(tourneyId):
             ret.append(test)
     return ret
 
+
+def getGamesForClub(clubId):
+
+    ret = []
+    for t in db.session.query(ClubGameList).filter(ClubGameList.club_id==clubId):
+        test = getTenhouGame(t.tenhou_game_id)
+        if test != None:
+            ret.append(test)
+    return ret
+
 ## Update ##
 
 @saveInstance
 def updateClubTourney(clubId, tourneyId):
+    global LAST_ERROR
+    
     club = getClub(clubId)
     if club == None:
         LAST_ERROR = "No such club"
         return None
     club.tourney_id = tourneyId
+    return 0
 
 @saveInstance
 def updateUserTenhouName(userId, tenhouName):
@@ -444,6 +518,8 @@ def updateUserTenhouName(userId, tenhouName):
 
 @saveInstance
 def changePassword(userId):
+    global LAST_ERROR
+    
     u = db.session.query(User).filter(User.user_id==userId).first()
     if not u:
         LAST_ERROR = "You are not registered! Please create an account ($createAccount)"
@@ -462,8 +538,51 @@ def finishTable(tableId,finished=1):
     return 0
 
 @saveInstance
-def startNextRound(tourneyId):
+def startNextRound(tourneyId, roundNumber=None):
+    global LAST_ERROR
+
     tourney = getTourney(tourneyId)
     if tourney == None:
-        return -1
+        LAST_ERROR = f"No such tourney!"
+        return None
+
     tourney.current_round = tourney.current_round + 1
+    return 0
+
+
+
+def getStandings(clubId):
+    
+    games = getGamesForClub(clubId)
+
+    rank = {}
+
+    for g in games:
+        if g.ton != None:
+            if not g.ton in rank:
+                rank[g.ton] = 0
+            rank[g.ton] += g.ton_payout
+
+        if g.nan != None:
+            if not g.nan in rank:
+                rank[g.nan] = 0
+            rank[g.nan] += g.nan_payout
+
+        if g.xia != None:
+            if not g.xia in rank:
+                rank[g.xia] = 0
+            rank[g.xia] += g.xia_payout
+
+        if g.pei != None:
+            if not g.pei in rank:
+                rank[g.pei] = 0
+            rank[g.pei] += g.pei_payout
+
+
+    ordered = []
+
+    for n in rank:
+        ordered.append([rank[n],n])
+    ordered.sort(key=lambda x:x[0], reverse=True)
+
+    return ordered

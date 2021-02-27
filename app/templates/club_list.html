@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <h1>Club List<h1>
+	{% for c in clubs[::-1] %}
+	<a href="{{ url_for('club_standings',clubId=c.club_id) }}">{{c.club_name}}</a>
+	</br>
+	</br>
+	{% endfor %}
+
+{% endblock %}

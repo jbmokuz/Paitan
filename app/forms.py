@@ -20,6 +20,12 @@ class TenhouNameForm(FlaskForm):
     tenhouName = StringField('Tenhou User Name')
     submit = SubmitField('Update User Name')
 
+
+#["","","","",
+#                      "","Shugi 5000","Shugi 2000","Show Tsumogiri",
+#                      "","3+5","","3Player",
+#                      "Full Hanchan","No Kuitan","No Aka dora","Always on?"]
+    
 class TenhouForm(FlaskForm):
 
     def validate_admin_page(form, field):
@@ -34,12 +40,20 @@ class TenhouForm(FlaskForm):
             raise ValidationError('Not a valid rule')
     
     admin_page = StringField('Admin Page', validators=[DataRequired(),validate_admin_page])
-    rules = StringField(
-        'Rules', validators=[DataRequired(),validate_rules])
+    #rules = StringField(
+    #    'Rules', validators=[DataRequired(),validate_rules])
+    aka = BooleanField("Aka dora (red 5s)")
+    kuitan = BooleanField("Kuitan (Open Tanyao)")
+    hanchan = BooleanField("Hanchan (Tonpuusen only if off)")
+    sanma = BooleanField("Sanma (Three player! Not currently supported for tournuments!)")
+    threefive = BooleanField("3+5 time (not sure exactly what this is about)")
+    tsumogiri = BooleanField("Show tsumogiri tiles")    
+    shugi2000 = BooleanField("Shugi 2000")
+    shugi5000 = BooleanField("Shugi 5000")    
     submit = SubmitField('Update')
 
 
 class RateForm(FlaskForm):
-    myField = SelectField(u'Select Default Rate', choices = ["Standard","Tensan","Tengo","TenPin"])
+    rate = SelectField(u'Select Default Rate', choices = ["Standard","Tensan","Tengo","TenPin"])
     submit = SubmitField('Update')
             

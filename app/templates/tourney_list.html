@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <h1>Tourney List<h1>
+	{% for t in tourneys[::-1] %}
+	<a href="{{ url_for('tourney_standings',tourneyId=t.tourney_id) }}">{{t.tourney_name}}</a>
+	</br>
+	</br>
+	{% endfor %}
+
+{% endblock %}

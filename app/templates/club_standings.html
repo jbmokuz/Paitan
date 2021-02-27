@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+</style>
+
+
+<button type="button" class="collapsible">Standings</button>
+<div class="content">
+  
+  <table>
+    <tr>
+      <th>Name</th>
+      <th>Score</th>
+    </tr>
+      {% for score,name in standings %}
+    <tr>
+      <th>{{ name }}</th>
+      <th>{{ score }}</th>
+    </tr>
+      {% endfor %}
+  </table>
+
+</div>
+<br>
+<br>
+
+<button type="button" class="collapsible">Games</button>
+<div class="content">
+
+  {% for round in games %}
+  
+  <button type="button" class="collapsible">Round {{round}}</button>
+  <div class="content">
+    <table>
+    <tr>
+      <th>東</th>
+      <th>南</th>
+      <th>西</th>
+      <th>北</th>
+      <th>Replay</th>
+    </tr>        
+   {% for game in games[round] %}
+    <tr>
+      <th>{{game.ton_payout}} &nbsp {{game.ton}}</th>
+      <th>{{game.nan_payout}} &nbsp {{game.nan}}</th>
+      <th>{{game.xia_payout}} &nbsp {{game.xia}}</th>
+      <th>{{game.pei_payout}} &nbsp {{game.pei}}</th>
+      <th><a href="https://tenhou.net/0/?log={{game.replay_id}}">https://tenhou.net/0/?log={{game.replay_id}}</a></th>      
+    </tr>
+    {% endfor %}
+   </table>    
+  </div>
+
+  {% endfor %}
+  
+  </div>
+
+</div>
+  <script>
+    {% include "tabs.html" %}
+  </script>
+  
+{% endblock %}

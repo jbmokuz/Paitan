@@ -10,28 +10,19 @@
   <p>{{club.tenhou_room}}</p>
   <p>Tenhou Rules<p>
   <p>{{club.tenhou_rules}}</p>
+  <p>Rate<p>
+  <p>{{club.tenhou_rate}}</p>
 
 
 </br>
 </br>
 
-    <h1>Set Rate (CURRENTLY NOT IMPLUMENTED)</h1>
-
-    <form action="" method="post" name="Inputs">
-	{{rate_form.hidden_tag()}}
-	<p>
-	    {{rate_form.myField()}}
-	</p>
-        <p>{{ rate_form.submit() }}</p>	
-    </form>
-    </br>
-    </br>
 
     <h1>Set Tenhou Info</h1>
     <form action="" method="post">
         {{ tenhou_form.hidden_tag() }}
         <p>
-            {{ tenhou_form.admin_page.label }}<br>
+            <h3>{{ tenhou_form.admin_page.label }}</h3>
             {{ tenhou_form.admin_page(size=32) }}<br>
             {% for error in tenhou_form.admin_page.errors %}
             <span style="color: red;">[{{ error }}]</span>
@@ -39,15 +30,36 @@
 	    </br>
    	    Example: https://tenhou.net/cs/edit/?C1027212875018865
         </p>
+	<h3>Rules</h3>
         <p>
-            {{ tenhou_form.rules.label }}<br>
-            {{ tenhou_form.rules(size=32) }}<br>
-            {% for error in tenhou_form.rules.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
+	    
+	    {{ tenhou_form.aka(checked=aka) }}	    
+            {{ tenhou_form.aka.label }}
 	    </br>
-      	    Example: 000B = No Aka, 0009 = Aka (Both full hanchan and Kuitan)
+	    {{ tenhou_form.kuitan(checked=kuitan) }}
+            {{ tenhou_form.kuitan.label }}
+	    </br>
+	    {{ tenhou_form.hanchan(checked=hanchan) }}
+            {{ tenhou_form.hanchan.label }}
+	    </br>
+	    {{ tenhou_form.sanma(checked=sanma) }}
+            {{ tenhou_form.sanma.label }}
+	    </br>
+	    {{ tenhou_form.threefive(checked=threefive) }}
+            {{ tenhou_form.threefive.label }}
+	    </br>	    
+	    {{ tenhou_form.tsumogiri(checked=tsumogiri) }}
+            {{ tenhou_form.tsumogiri.label }}
+	    </br>
+	    {{ tenhou_form.shugi2000(checked=shugi2) }}
+            {{ tenhou_form.shugi2000.label }}
+	    </br>
+	    {{ tenhou_form.shugi5000(checked=shugi5) }}
+            {{ tenhou_form.shugi5000.label }}
+	    </br>	    	    
+	    
         </p>
+	
 
 	<!-- self.rules_traslations = ["","","","",
                       "","Shugi 5000","Shugi 2000","Show Tsumokiri",
@@ -56,5 +68,22 @@
 	
         <p>{{ tenhou_form.submit() }}</p>
     </form>
+
+
+    </br>
+    </br>
+
+        <h1>Set Rate</h1>
+
+    <form action="" method="post" name="Inputs">
+	{{rate_form.hidden_tag()}}
+	<p>
+	    {{rate_form.rate()}}
+	</p>
+        <p>{{ rate_form.submit() }}</p>	
+    </form>
+    </br>
+    </br>
+
 
 {% endblock %}

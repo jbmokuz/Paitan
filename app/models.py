@@ -48,6 +48,7 @@ class Club(db.Model):
     club_name = db.Column(db.String(80), unique=False, nullable=True)
     tenhou_room = db.Column(db.String(120), unique=False, nullable=True)
     tenhou_rules = db.Column(db.String(120), unique=False, nullable=True)
+    tenhou_rate = db.Column(db.String(120), unique=False, nullable=True)
     mjsoul_room = db.Column(db.String(120), unique=False, nullable=True)
     tourney_id = db.Column(db.Integer,db.ForeignKey('tourney.tourney_id'), nullable=True)    
     
@@ -68,6 +69,7 @@ class TenhouGame(db.Model):
     tenhou_game_id = db.Column(db.Integer, primary_key=True,nullable=False, autoincrement=True)
     replay_id = db.Column(db.String(128), unique=True, nullable=True)
     rate = db.Column(db.String(128), unique=False, nullable=True)
+    round_number = db.Column(db.Integer, nullable=True)
     
     ton = db.Column(db.String(80), unique=False, nullable=True)
     nan = db.Column(db.String(80), unique=False, nullable=True)
@@ -84,10 +86,10 @@ class TenhouGame(db.Model):
     xia_shugi = db.Column(db.Integer ,nullable=True)
     pei_shugi = db.Column(db.Integer ,nullable=True)
     
-    ton_payout = db.Column(db.Integer ,nullable=True)
-    nan_payout = db.Column(db.Integer ,nullable=True)
-    xia_payout = db.Column(db.Integer ,nullable=True)
-    pei_payout = db.Column(db.Integer ,nullable=True)
+    ton_payout = db.Column(db.Float ,nullable=True)
+    nan_payout = db.Column(db.Float ,nullable=True)
+    xia_payout = db.Column(db.Float ,nullable=True)
+    pei_payout = db.Column(db.Float ,nullable=True)
 
     tourneyGamelist = relationship("TourneyGameList", cascade="all,delete", backref="game")
     
@@ -104,6 +106,12 @@ class TourneyGameList(db.Model):
     #@WARNING You need an underscore?!?!?!?!?!?!?
     tenhou_game_id = db.Column(db.Integer, db.ForeignKey('tenhou_game.tenhou_game_id'),nullable=False)
     tourney_id = db.Column(db.Integer,db.ForeignKey('tourney.tourney_id'), nullable=False)
+
+class ClubGameList(db.Model):
+    id = db.Column(db.Integer, primary_key=True,nullable=False)
+    #@WARNING You need an underscore?!?!?!?!?!?!?
+    tenhou_game_id = db.Column(db.Integer, db.ForeignKey('tenhou_game.tenhou_game_id'),nullable=False)
+    club_id = db.Column(db.Integer,db.ForeignKey('club.club_id'), nullable=False)
 
 # For a list of the table by user id
 class TableList(db.Model):
