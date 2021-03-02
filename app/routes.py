@@ -6,7 +6,7 @@ from app.forms import *
 from app import db
 from database import *
 from functions import *
-
+from parsers.parse import CARD
 
 MOKU_USERID = 119046709983707136
 
@@ -153,6 +153,33 @@ def club_standings(clubId):
     return render_template('club_standings.html',club=club, standings=standings, games=games)
 
 
+@app.route("/binghou/<path:userName>", methods=['GET'])
+def binghou(userName):
+
+    binghou = 0
+
+    for game in getGamesForUser(userName):
+        print(game)
+        if game.ton == userName:
+            binghou = binghou | game.ton_binghou
+        if game.nan == userName:
+            binghou = game.nan_binghou | binghou
+        if game.xia == userName:
+            binghou = game.xia_binghou | binghou
+        if game.pei == userName:
+            binghou = game.pei_binghou | binghou
+
+    binghouL = []
+
+    print(binghou)
+    for i in range(25):
+        if binghou & 1 == 0:
+            binghouL.append(0)
+        else:
+            binghouL.append(1)
+        binghou = binghou >> 1
+
+    return render_template("binghou.html",binghou=binghouL,userName=userName,card=CARD)
 
 """
 @app.route("/tourney", methods=['GET'])

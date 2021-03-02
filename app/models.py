@@ -91,6 +91,11 @@ class TenhouGame(db.Model):
     xia_payout = db.Column(db.Float ,nullable=True)
     pei_payout = db.Column(db.Float ,nullable=True)
 
+    ton_binghou = db.Column(db.Integer, nullable=True)
+    nan_binghou = db.Column(db.Integer, nullable=True)
+    xia_binghou = db.Column(db.Integer, nullable=True)
+    pei_binghou = db.Column(db.Integer, nullable=True)    
+
     tourneyGamelist = relationship("TourneyGameList", cascade="all,delete", backref="game")
     
     def __repr__(self):

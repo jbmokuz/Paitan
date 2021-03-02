@@ -1,0 +1,61 @@
+<html>
+  <head>
+    <style>
+      body {
+background-color: white;
+	color: black;
+	font-size: 20px;
+	font-family: "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
+}
+
+h1, th {
+	font-family: Georgia, "Times New Roman", Times, serif;
+}
+
+h1 {
+	font-size: 18px;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+th, td {
+	padding: 10px;
+	border: 2px #666 solid;
+	text-align: center;
+	font-size: 24px;
+}
+
+
+
+    </style>
+</head>
+<body>  
+  <h1>Binghou Card</h1>
+  <h1> {{userName}} </h1>
+  <h1>{{binghou}}<h1>
+<table>
+	<tr>
+		<th width="20%">B</th>
+		<th width="20%">I</th>
+		<th width="20%">N</th>
+		<th width="20%">G</th>
+		<th width="20%">HOU</th>
+	</tr>
+
+	{% for i in range(5) %}
+	    <tr>	
+ 	      {% for j in range(5) %}
+	          {% if binghou[i*5+j] == 0 %}
+	              <td>{{card[i*5+j]}}&nbsp;</td>	      
+ 	          {% else %}
+    	              <td style="background-color:#29b6f6">{{card[i*5+j]}}&nbsp;</td>	      
+	          {% endif %}
+              {% endfor %}
+   	    </tr>	    
+	{% endfor %}
+	
+</table>
+</body>
+</html>

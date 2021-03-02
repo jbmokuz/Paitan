@@ -41,7 +41,7 @@ def scorePayout(players, tableRate):
 
     oka = [tableRate.oka] + [0]*len(players) # giving 1st place oka bonus
     for i, p in enumerate(players):
-        name, score, shugi = p
+        name, score, shugi, binghou = p
         score = score*100
         lastScore += f"#{i+1}Place: (Score[{score}] + Oka[{oka[i]}] - Target[({tableRate.target})])/1000) × Rate[{tableRate.rate}] = ${((score + oka[i] - tableRate.target)/1000)*tableRate.rate:.2f}\n"
 
@@ -63,11 +63,11 @@ def scorePayout(players, tableRate):
     ret = []
     for i, p in enumerate(players):
 
-        name, score, shugi = p
+        name, score, shugi, binghou = p
         score = score*100
         calc = (((score + oka[i] - tableRate.target)/1000) + tableRate.uma[i]) * tableRate.rate + tableRate.shugi * shugi
         payout = round(calc,2)
-        ret.append([name,score,shugi,payout])
+        ret.append([name,score,shugi,payout,binghou])
         lastScore += f"#{i+1}Place: (((({score}+{oka[i]}-{tableRate.target})/1000)+{tableRate.uma[i]})×{tableRate.rate}+{tableRate.shugi}×{shugi}) = ${payout}\n"
 
     return [ret, lastScore]

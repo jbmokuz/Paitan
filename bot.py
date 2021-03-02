@@ -393,7 +393,7 @@ def formatScores(scores,tableRate):
 
     for row in scores:
 
-        name, score, shugi, payout = row
+        name, score, shugi, payout, bing = row
         
         score = str(score)
         shugi = str(shugi)
@@ -480,13 +480,6 @@ async def score(ctx, log=None, rate=None, shugi=None):
         scoresOrdered.append([x for x in scores if x[0] == seatOrder[i]][0])
 
     # Add scores to db
-    """
-    tourney = getTourney(club.tourney_id)
-
-    
-    if (tourney == None):
-        tourney = createTourney("Fishing "+str(time.time()))
-    """
     
     game = createTenhouGame(logId,scoresOrdered,tableRate.name)
     
@@ -498,23 +491,7 @@ async def score(ctx, log=None, rate=None, shugi=None):
         if ret == None:
             await chan.send(getError())
             return
-        
-    """
-    else:
-        # Do we currently have a tourney?
-        if tourney != None:
-            # Add the game to the tourney
-            ret = addGameToTourney(tourney.tourney_id, game.tenhou_game_id)
-            if ret == None:
-                await chan.send(getError())
-                return
-            tables = getTablesFromScore(tourney,[i[0] for i in players])
-            if len(tables.keys()) > 1:
-                await chan.send("WARNING: Players are not all at the same table!")
-
-            #@TODO should we not finish table if not all players are at the same table?
-            #finishTable([i for i in tables.keys()][0])
-    """
+    
 
     print(explain)    
     await chan.send(formatScores(scores, tableRate))
