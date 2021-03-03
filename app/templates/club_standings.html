@@ -21,23 +21,21 @@ tr:nth-child(even) {
 </style>
 
 
-<button type="button" class="collapsible">Standings</button>
-<div class="content">
+<h1> Kantest standings </h1>
   
   <table>
     <tr>
       <th>Name</th>
-      <th>Score</th>
+      <th>Kans</th>
     </tr>
       {% for score,name in standings %}
     <tr>
-      <th>{{ name }}</th>
+      <th><a href="{{ url_for('binghou',userName=name)}}">{{name}}</a></th>
       <th>{{ score }}</th>
     </tr>
       {% endfor %}
   </table>
 
-</div>
 <br>
 <br>
 

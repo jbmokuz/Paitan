@@ -94,8 +94,13 @@ class TenhouGame(db.Model):
     ton_binghou = db.Column(db.Integer, nullable=True)
     nan_binghou = db.Column(db.Integer, nullable=True)
     xia_binghou = db.Column(db.Integer, nullable=True)
-    pei_binghou = db.Column(db.Integer, nullable=True)    
+    pei_binghou = db.Column(db.Integer, nullable=True)
 
+    ton_kan = db.Column(db.Integer, nullable=True)
+    nan_kan = db.Column(db.Integer, nullable=True)
+    xia_kan = db.Column(db.Integer, nullable=True)
+    pei_kan = db.Column(db.Integer, nullable=True)    
+    
     tourneyGamelist = relationship("TourneyGameList", cascade="all,delete", backref="game")
     
     def __repr__(self):

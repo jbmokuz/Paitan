@@ -8,7 +8,7 @@ import urllib
 from discord.ext.commands import has_permissions, MissingPermissions
 from database import *
 from functions import *
-from parsers.parse import getLogId
+from parsers.parse import getLogId, intToYaku
 
 if len(sys.argv) > 1:
     TOKEN = os.environ["DISCORD_DEV_TOKEN"]
@@ -393,7 +393,7 @@ def formatScores(scores,tableRate):
 
     for row in scores:
 
-        name, score, shugi, payout, bing = row
+        name, score, shugi, payout, bing, kans = row
         
         score = str(score)
         shugi = str(shugi)
@@ -436,11 +436,11 @@ async def score(ctx, log=None, rate=None, shugi=None):
     if rate == None:
         rate = club.tenhou_rate
     
-    if log == None or rate == None:
+    if log == None: #or rate == None:
         await chan.send("usage: !score [tenhou_log] [rate]\nEx: !score https://tenhou.net/0/?log=2020051313gm-0209-19713-10df4ad2&tw=1 tengo")
         
-    
-    rate = rate.lower()
+    if rate != None:
+        rate = rate.lower()
     tableRate = None
 
     # Pick the proper table rate
@@ -454,8 +454,9 @@ async def score(ctx, log=None, rate=None, shugi=None):
     elif rate == "standard":
         tableRate = copy.deepcopy(STANDARD)
     else:
-        await chan.send(f"{rate} is not a valid rate (try !help score)")
-        return
+        tableRate = copy.deepcopy(STANDARD)
+        #await chan.send(f"{rate} is not a valid rate (try !help score)")
+        #return
 
     if(shugi != None):
         try:
@@ -493,8 +494,15 @@ async def score(ctx, log=None, rate=None, shugi=None):
             return
     
 
-    print(explain)    
-    await chan.send(formatScores(scores, tableRate))
+    print(explain)
+    #if 
+    #await chan.send(formatScores(scores, tableRate))
+    ret = ""
+    for row in scores:
+        name, score, shugi, payout, bing, kans = row
+        ret += name+": Kans "+str(kans)+" Yaku: "+", ".join(intToYaku(bing))
+        ret += "\n"
+    await chan.send(ret)
     
     """
     for guild in bot.guilds:

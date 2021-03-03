@@ -4,8 +4,8 @@ import re
 # http://tenhou.net/0/?log=2020070913gm-0209-19691-21db0170&tw=2         
 
 
-CARD = ["Honitsu"    ,">Ura2"  ,"Ikkitsuukan" ,">80 fu"  ,"Haneman",
-        "Riichi nomi","Bakaze" ,"Ippatsu"     ,"Tanyao"  ,"Chinitsu",
+CARD = ["Honitsu"    ,">Ura2"  ,"Ikkitsuukan" ,">80fu"  ,"Haneman",
+        "Riichi Nomi","Bakaze" ,"Ippatsu"     ,"Tanyao"  ,"Chinitsu",
         "Chanta"     ,"Riichi" ,"Local Yaku"  ,"Uradora" ,"Chiitoitsu",
         "2sou"       ,"Yakuhai","Menzen"      ,"Sanshoku","Sanankou",
         "Other Yaku" ,"3zou"   ,"Pinfu"       ,"Iipeikou","Toitoi"]
@@ -27,21 +27,43 @@ def intToYaku(i):
         if i&1 == 1:
             ret.append(yaku)
         i = i >> 1
-    print(ret)
+    return ret
 
-def updateBinghou(bing,names,game):
+def updateBinghou(bing,kans,names,game):
 
     global CARD
     
     for r in game.rounds:
         for agari in r.agari:
             player = names[agari.player]
+
+            if agari.fu > 80:
+                bing[agari.player] = bing[agari.player] | (1 << CARD.index(">80fu"))
+                
+            if agari.points == 1800 or agari.points == 18000:
+                bing[agari.player] = bing[agari.player] | (1 << CARD.index("Haneman"))
+
+            if "2s" in [i.asdata()[:2] for i in agari.hand]:
+                bing[agari.player] = bing[agari.player] | (1 << CARD.index("2sou"))
+
+            if "3s" in [i.asdata()[:2] for i in agari.hand]:
+                bing[agari.player] = bing[agari.player] | (1 << CARD.index("2sou"))
+                        
             for yaku, han in agari.yaku:
                 if han < 0:
                     continue
                 print("YAKU",yaku,player)
-                if yaku.split(" ")[0] in CARD:
+                if yaku.split(" ")[0] in CARD and not (yaku == "Uradora" and han == 0):
                     bing[agari.player] = bing[agari.player] | (1 << CARD.index(yaku.split(" ")[0]))
+                elif yaku != "Uradora" and yaku != "Dora" and yaku != "Akadora" :
+                    bing[agari.player] = bing[agari.player] | (1 << CARD.index("Other Yaku"))            
+                if yaku == 'Uradora' and han > 2:
+                    bing[agari.player] = bing[agari.player] | (1 << CARD.index(">Ura2"))
+                if yaku == "Riichi" and sum([i[1] for i in agari.yaku]) == 1:
+                    bing[agari.player] = bing[agari.player] | (1 << CARD.index("Riichi Nomi"))
+                if yaku == "Chankan":
+                    kans[agari.player] += 5
+                    
             for yaku in agari.yakuman:
                 yaku = "🌟**"+yaku+"**🌟"
                 print("YAKUMAN",yaku,player)
@@ -53,9 +75,11 @@ def updateBinghou(bing,names,game):
         for event in r.events:
             if event.type == "Call":
                 if event.meld.type == "chakan" and event.meld.type != "kan":
+                    player = names[event.player]
                     print("KAN",player)
-                    #player = names[event.player]
-                    #self.players[player].kans += 1
+                    kans[event.player] += 1
+                    if event.player != event.meld.fromPlayer:
+                        kans[event.meld.fromPlayer] -= 1
 
     
 
@@ -82,8 +106,9 @@ def parseTenhou(log):
     game = getGameObject(log)
     names = [n.name for n in game.players]
     binghou = [0,0,0,0]
+    kans = [0,0,0,0]
 
-    updateBinghou(binghou,names,game)
+    updateBinghou(binghou,kans,names,game)
     scores = [j for i,j in  enumerate(game.owari.split(",")) if i % 2 == 0][:len(names)]
 
     if len(game.owari.split(",")) > 8:
@@ -96,7 +121,7 @@ def parseTenhou(log):
     print("BING",[intToYaku(i) for i in binghou])
     
     for i in range(len(names)):
-        ret.append([names[i],int(scores[i]),int(shugi[i]),binghou[i]])
+        ret.append([names[i],int(scores[i]),int(shugi[i]),binghou[i],kans[i]])
 
     return ret
 

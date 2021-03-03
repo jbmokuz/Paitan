@@ -85,11 +85,11 @@ def createTenhouGame(replayId, scores, rate, roundNumber=0):
         LAST_ERROR = "Already scored that game! Will not be added!"
         return None
     
-    name0, score0, shugi0, payout0, binghou0 = scores[0]
-    name1, score1, shugi1, payout1, binghou1 = scores[1]
-    name2, score2, shugi2, payout2, binghou2 = scores[2]
+    name0, score0, shugi0, payout0, binghou0, kan0 = scores[0]
+    name1, score1, shugi1, payout1, binghou1, kan1 = scores[1]
+    name2, score2, shugi2, payout2, binghou2, kan2 = scores[2]
     if len(scores) > 3 :
-        name3, score3, shugi3, payout3, binghou3 = scores[3]
+        name3, score3, shugi3, payout3, binghou3, kan3 = scores[3]
     else:
         name3 = None
         score3 = None
@@ -99,12 +99,12 @@ def createTenhouGame(replayId, scores, rate, roundNumber=0):
         g = TenhouGame(replay_id=replayId, rate=rate, ton=name0, nan=name1, xia=name2, pei=name3,
                    ton_score=score0, nan_score=score1, xia_score=score2, pei_score=score3,
                    ton_shugi=shugi0, nan_shugi=shugi1, xia_shugi=shugi2, pei_shugi=shugi3,
-                       ton_payout=payout0, nan_payout=payout1, xia_payout=payout2, pei_payout=payout3, round_number=roundNumber,ton_binghou=binghou0,nan_binghou=binghou1,xia_binghou=binghou2,pei_binghou=binghou3)
+                       ton_payout=payout0, nan_payout=payout1, xia_payout=payout2, pei_payout=payout3, round_number=roundNumber,ton_binghou=binghou0,nan_binghou=binghou1,xia_binghou=binghou2,pei_binghou=binghou3,ton_kan=kan0,nan_kan=kan1,xia_kan=kan2,pei_kan=kan3)
     else:
         g = TenhouGame(rate=rate, ton=name0, nan=name1, xia=name2, pei=name3,
                    ton_score=score0, nan_score=score1, xia_score=score2, pei_score=score3,
                    ton_shugi=shugi0, nan_shugi=shugi1, xia_shugi=shugi2, pei_shugi=shugi3,
-                       ton_payout=payout0, nan_payout=payout1, xia_payout=payout2, pei_payout=payout3, round_number=roundNumber,ton_binghou=binghou0,nan_binghou=binghou1,xia_binghou=binghou2,pei_binghou=binghou3)
+                       ton_payout=payout0, nan_payout=payout1, xia_payout=payout2, pei_payout=payout3, round_number=roundNumber,ton_binghou=binghou0,nan_binghou=binghou1,xia_binghou=binghou2,pei_binghou=binghou3,ton_kan=kan0,nan_kan=kan1,xia_kan=kan2,pei_kan=kan3)
 
     db.session.add(g)
 
@@ -567,22 +567,26 @@ def getStandings(clubId):
         if g.ton != None:
             if not g.ton in rank:
                 rank[g.ton] = 0
-            rank[g.ton] += g.ton_payout
+            #rank[g.ton] += g.ton_payout
+            rank[g.ton] += g.ton_kan            
 
         if g.nan != None:
             if not g.nan in rank:
                 rank[g.nan] = 0
-            rank[g.nan] += g.nan_payout
+            #rank[g.nan] += g.nan_payout
+            rank[g.nan] += g.nan_kan            
 
         if g.xia != None:
             if not g.xia in rank:
                 rank[g.xia] = 0
-            rank[g.xia] += g.xia_payout
+            #rank[g.xia] += g.xia_payout
+            rank[g.xia] += g.xia_kan            
 
         if g.pei != None:
             if not g.pei in rank:
                 rank[g.pei] = 0
-            rank[g.pei] += g.pei_payout
+            #rank[g.pei] += g.pei_payout
+            rank[g.pei] += g.pei_kan         
 
 
     ordered = []
