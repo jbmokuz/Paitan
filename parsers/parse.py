@@ -51,8 +51,6 @@ def updateBinghou(bing,kans,names,game):
                 bing[agari.player] = bing[agari.player] | (1 << CARD.index(f"2 {SPECIAL_TILE}"))
                 
             if "3s" in [machi.asdata()[:2] for machi in agari.machi]:
-                import pdb
-                pdb.set_trace()
                 bing[agari.player] = bing[agari.player] | (1 << CARD.index("3zou Win"))
 
             if  len([meld for meld in agari.melds]) >= 3:
