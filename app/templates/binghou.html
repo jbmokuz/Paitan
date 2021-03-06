@@ -56,5 +56,33 @@ th, td {
 	{% endfor %}
 	
 </table>
+
+</br>
+</br>
+<h2>Explination of Binghou!</h2>
+
+
+Just get 5 Squares in a row, horizontally vertically or diagonally
+</br>
+<img src="{{url_for('static', filename='bingo.png')}}" />
+
+
+<h1> Explination of squares </h1>
+Fill in a square, you must win a hand with one of the following conditions
+<ul>
+  <li> >Ura2 - Get Ura3 or more! </li>
+  <li> Ikkitsuukan - 123456789</li>
+  <li> >50Fu - have more then 50fu in your winning hand</li>  
+  <li>Haneman - get a Haneman</li>
+  <li>Riichi Nomi - Riichi with no other han (so not even uradora)</li>
+  <li>Jikaze - Your wind!</li>
+  <li>3 Melds - make 3 melds</li>
+  <li>Menzen - closed tsumo</li>
+  <li>3zou win - your winning tile must be the 3zou</li>
+  <li>Other Yaku - get any other yaku not on the board</li>
+  <li> 2 9pin - win a hand with at least 2 9pin </li>
+  <li> All others - Just get that yaku! </li>
+</ul>  
+
 </body>
 </html>

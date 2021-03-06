@@ -468,6 +468,9 @@ async def score(ctx, log=None, rate=None, shugi=None):
 
     # This gets the players and stuff
     players = parseTenhou(log)
+    if players == None:
+        await chan.send(getError())
+        return
     # This is part of a hack to keep seat order
     seatOrder = [i[0] for i in players]
     # Calculates the score and also the explination of how the score was calculated
@@ -485,6 +488,7 @@ async def score(ctx, log=None, rate=None, shugi=None):
     game = createTenhouGame(logId,scoresOrdered,tableRate.name)
     
     if game == None:
+        await chan.send(getError())
         await chan.send("WARNING: Already scored that game! Will not be added!")
         await chan.send("Here are results anyways")
     else:
@@ -494,7 +498,7 @@ async def score(ctx, log=None, rate=None, shugi=None):
             return
     
 
-    print(explain)
+    #print(explain)
     #if 
     #await chan.send(formatScores(scores, tableRate))
     ret = ""

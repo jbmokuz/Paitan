@@ -84,6 +84,10 @@ def createTenhouGame(replayId, scores, rate, roundNumber=0):
     if replayId != None and db.session.query(TenhouGame).filter(TenhouGame.replay_id==replayId).first():
         LAST_ERROR = "Already scored that game! Will not be added!"
         return None
+
+    if type(scores) != type([]):
+        LAST_ERROR = "Error parsing URL"
+        return None
     
     name0, score0, shugi0, payout0, binghou0, kan0 = scores[0]
     name1, score1, shugi1, payout1, binghou1, kan1 = scores[1]
