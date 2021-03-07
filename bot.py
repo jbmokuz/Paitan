@@ -17,6 +17,8 @@ else:
 
 bot = commands.Bot("$")
 
+ROULETTE = []
+
 async def get_vars(ctx):
     player = ctx.author
     chan = ctx.channel
@@ -30,7 +32,48 @@ async def get_vars(ctx):
 
 #id=119046709983707136 name='moku' discriminator='9015'
 
+def show_roulette():
+    global ROULETTE
+    ret = ""
+    for i in ROULETTE:
+        if i < 2:
+            ret += "🀫"
+        if i == 2:
+            ret += "🀆"
+        if i == 3:
+            ret += "🀂"
+        ret += " "
+    return ret
 
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def load_and_spin(ctx):
+    global ROULETTE
+    player, chan, club = await get_vars(ctx)
+    ROULETTE = [0,0,0,0,0,1]
+    random.shuffle(ROULETTE)
+    await chan.send(show_roulette())
+
+@bot.command()    
+@commands.has_permissions(administrator=True)
+async def pull_tile(ctx):
+    global ROULETTE
+    player, chan, club = await get_vars(ctx)
+    pos = len([i for i in ROULETTE if i < 2])-1
+    if ROULETTE[pos] == 1:
+        await chan.send("BANG!")
+        time.sleep(2)
+        await chan.send("YOU")
+        await chan.send("HAVE")
+        await chan.send("BEEN")
+        await chan.send("XIAT!")
+    else:
+        await chan.send("bang?")
+        time.sleep(2)
+        await chan.send("It was a blank")
+    ROULETTE[pos] += 2
+    await chan.send(show_roulette())
+    
 @bot.command()
 async def changePass(ctx):
     """
