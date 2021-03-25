@@ -1,11 +1,9 @@
-from app import app
-from flask import render_template, flash, redirect,  url_for
+from flask import render_template, flash, redirect, url_for
 from flask_login import current_user, login_user, logout_user
-from app.models import *
+
+from app import app
 from app.forms import *
-from app import db
 from database import *
-from functions import *
 from parsers.parse import CARD
 
 MOKU_USERID = 119046709983707136

@@ -54,6 +54,6 @@ class TenhouForm(FlaskForm):
 
 
 class RateForm(FlaskForm):
-    rate = SelectField(u'Select Default Rate', choices = ["Standard","Tensan","Tengo","TenPin"])
+    rate = SelectField(u'Select Default Rate', choices = ["Standard","Tensan","Tengo","TenPin","Binghou"])
     submit = SubmitField('Update')
             

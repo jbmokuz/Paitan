@@ -89,11 +89,11 @@ def createTenhouGame(replayId, scores, rate, roundNumber=0):
         LAST_ERROR = "Error parsing URL"
         return None
     
-    name0, score0, shugi0, payout0, binghou0, kan0 = scores[0]
-    name1, score1, shugi1, payout1, binghou1, kan1 = scores[1]
-    name2, score2, shugi2, payout2, binghou2, kan2 = scores[2]
+    name0, score0, shugi0, payout0, binghou0, kan0 = scores[0].getList()
+    name1, score1, shugi1, payout1, binghou1, kan1 = scores[1].getList()
+    name2, score2, shugi2, payout2, binghou2, kan2 = scores[2].getList()
     if len(scores) > 3 :
-        name3, score3, shugi3, payout3, binghou3, kan3 = scores[3]
+        name3, score3, shugi3, payout3, binghou3, kan3 = scores[3].getList()
     else:
         name3 = None
         score3 = None

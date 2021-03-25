@@ -1,14 +1,15 @@
-import discord, os, random, time
-from discord.ext import commands
-from database import *
-import requests, sys, re
-import xml.etree.ElementTree as ET
 import copy
+import os
+import time
 import urllib
-from discord.ext.commands import has_permissions, MissingPermissions
+
+import requests
+import sys
+from discord.ext import commands
+
 from database import *
-from functions import *
-from parsers.parse import getLogId, intToYaku
+from parsers.parse import getLogId, intToYaku, parseTenhou, scorePayout
+from parsers.parse import TENSAN, TENGO, TENPIN, STANDARD, BINGHOU
 
 if len(sys.argv) > 1:
     TOKEN = os.environ["DISCORD_DEV_TOKEN"]
@@ -18,6 +19,10 @@ else:
 bot = commands.Bot("$")
 
 ROULETTE = []
+
+EMOJI_WARNING = "⚠️"
+EMOJI_ERROR = "🚫"
+EMOJI_OK = "👍"
 
 async def get_vars(ctx):
     player = ctx.author
@@ -31,6 +36,8 @@ async def get_vars(ctx):
     return player, chan, club
 
 #id=119046709983707136 name='moku' discriminator='9015'
+
+## ROULETTE ##
 
 def show_roulette():
     global ROULETTE
@@ -46,6 +53,18 @@ def show_roulette():
     return ret
 
 @bot.command()
+async def roll(ctx, dice=2):
+    """
+    roll dice
+    """
+    player, chan, club = await get_vars(ctx)
+    rolls = []
+    for i in range(dice):
+        rolls.append(random.randint(1,6))
+    await chan.send(f"{rolls}\n{sum(rolls)}")
+
+    
+@bot.command()
 @commands.has_permissions(administrator=True)
 async def load_and_spin(ctx):
     global ROULETTE
@@ -53,7 +72,7 @@ async def load_and_spin(ctx):
     ROULETTE = [0,0,0,0,0,1]
     random.shuffle(ROULETTE)
     await chan.send(show_roulette())
-
+    
 @bot.command()    
 @commands.has_permissions(administrator=True)
 async def pull_tile(ctx):
@@ -73,6 +92,9 @@ async def pull_tile(ctx):
         await chan.send("It was a blank")
     ROULETTE[pos] += 2
     await chan.send(show_roulette())
+    
+
+#################
     
 @bot.command()
 async def changePass(ctx):
@@ -299,6 +321,7 @@ async def topCut(ctx,numberOfTables):
     """
     Cut the top number of tables
     """
+    player, chan, club = await get_vars(ctx)
 
     try:
         numberOfTables = int(numberOfTables)
@@ -430,22 +453,22 @@ async def info(ctx):
     await chan.send(ret)
 
 
-def formatScores(scores,tableRate):
+def formatScores(players,tableRate):
 
     table = [["Score","","Pay","Name"]]
 
-    for row in scores:
+    for row in players:
 
-        name, score, shugi, payout, bing, kans = row
+        #name, score, shugi, payout, bing, kans = row
         
-        score = str(score)
-        shugi = str(shugi)
-        payout = str(payout)
+        score = str(row.score)
+        shugi = str(row.shugi)
+        payout = str(row.payout)
         if not "-" in shugi:
             shugi = "+"+shugi
         if not "-" in payout:
             payout = "+"+payout       
-        table.append([str(score),str(shugi),str(payout),str(name)])
+        table.append([str(score),str(shugi),str(payout),str(row.name)])
 
     colMax = [max([len(i) for i in c]) for c in zip(*table)]
     colMax[-1] = 0
@@ -473,14 +496,18 @@ async def score(ctx, log=None, rate=None, shugi=None):
             defaults to the rate shugi
     """
     player, chan, club = await get_vars(ctx)
-
+    
     print("Rate",club.tenhou_rate)
     
     if rate == None:
         rate = club.tenhou_rate
-    
-    if log == None: #or rate == None:
-        await chan.send("usage: !score [tenhou_log] [rate]\nEx: !score https://tenhou.net/0/?log=2020051313gm-0209-19713-10df4ad2&tw=1 tengo")
+
+    if log == None or rate == None:
+        await ctx.message.add_reaction(EMOJI_ERROR)
+        message = "usage: $score [tenhou_log] [rate]\nEx: $score https://tenhou.net/0/?log=2020051313gm-0209-19713-10df4ad2&tw=1 tengo"
+        if rate == None:
+            message = "No default rate set\n"+message
+        await chan.send(message)
         
     if rate != None:
         rate = rate.lower()
@@ -496,6 +523,8 @@ async def score(ctx, log=None, rate=None, shugi=None):
         tableRate = copy.deepcopy(TENPIN)
     elif rate == "standard":
         tableRate = copy.deepcopy(STANDARD)
+    elif rate == "binghou":
+        tableRate = copy.deepcopy(BINGHOU)
     else:
         tableRate = copy.deepcopy(STANDARD)
         #await chan.send(f"{rate} is not a valid rate (try !help score)")
@@ -505,17 +534,18 @@ async def score(ctx, log=None, rate=None, shugi=None):
         try:
             tableRate.shugi = round(float(shugi),3)
         except:
+            await ctx.message.add_reaction(EMOJI_ERROR)
             await chan.send(f"{shugi} is not a valid shugi")
             return
-
 
     # This gets the players and stuff
     players = parseTenhou(log)
     if players == None:
+        await ctx.message.add_reaction(EMOJI_ERROR)
         await chan.send(getError())
         return
     # This is part of a hack to keep seat order
-    seatOrder = [i[0] for i in players]
+    seatOrder = [i.name for i in players]
     # Calculates the score and also the explination of how the score was calculated
     scores, explain = scorePayout(players, tableRate)
     # Gets the unique id for the log
@@ -523,32 +553,37 @@ async def score(ctx, log=None, rate=None, shugi=None):
     
     # @TODO this is really hacky
     scoresOrdered = []
-    for i,p in enumerate(players):
-        scoresOrdered.append([x for x in scores if x[0] == seatOrder[i]][0])
+    for i, p in enumerate(players):
+        scoresOrdered.append([x for x in scores if x.name == seatOrder[i]][0])
 
     # Add scores to db
     
     game = createTenhouGame(logId,scoresOrdered,tableRate.name)
     
     if game == None:
-        await chan.send(getError())
-        await chan.send("WARNING: Already scored that game! Will not be added!")
-        await chan.send("Here are results anyways")
+        #await chan.send(getError())
+        await ctx.message.add_reaction(EMOJI_WARNING)
+        await chan.send("WARNING: Already scored that game! Will not be added\nHere are results anyways")
     else:
         ret = addGameToClub(club.club_id, game.tenhou_game_id)
         if ret == None:
+            await ctx.message.add_reaction(EMOJI_ERROR)
             await chan.send(getError())
             return
     
-
     #print(explain)
     #if 
     #await chan.send(formatScores(scores, tableRate))
     ret = ""
-    for row in scores:
-        name, score, shugi, payout, bing, kans = row
-        ret += name+": Kans "+str(kans)+" Yaku: "+", ".join(intToYaku(bing))
-        ret += "\n"
+    if rate == "binghou":
+        for row in scores:
+            #name, score, shugi, payout, bing, kans = row.getList()
+            ret += row.name+": Kans "+str(row.kans)+" Yaku: "+", ".join(intToYaku(row.binghou))
+            ret += "\n"
+    else:
+        ret += formatScores(scores, tableRate)
+
+    await ctx.message.add_reaction(EMOJI_OK)
     await chan.send(ret)
     
     """
@@ -743,9 +778,13 @@ async def ping(ctx):
     """
     player, chan, club = await get_vars(ctx)
 
-    
     player = ctx.author
     chan = ctx.channel
+
+    #import pdb
+    #pdb.set_trace()
+    #for emoji in club.emojis:
+    #    print("Name:", emoji.name + ",", "ID:", emoji.id)
     print("Chan id",str(chan.id))
     await chan.send(f"pong {chan.guild.id}")
         
