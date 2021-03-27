@@ -54,13 +54,13 @@ def emotes():
     owned = user.chars.split(",")
     bonded = user.bonded.split(",")
 
-    print(">", char, numb)
     if (char != None and numb != None):
         if char in owned:
             if int(numb) <= 9:
-                os.popen(f"python3 emote.py test {char} {numb}")
+                os.popen(f"python3 emote_client.py test {char} {numb}")
             elif char in bonded:
-                os.popen(f"python3 emote.py test {char} {numb}")
+                os.popen(f"python3 emote_client.py test {char} {numb}")
+            return redirect(request.path, code=302)
 
     chars = []
     chars += addChars(owned, bonded, "./app/static/chars/bamboo/*")
@@ -117,7 +117,7 @@ def settings():
             return redirect(url_for('index'))
 
         return render_template('settings.html', title='Register', pass_form=pass_form, clubs=clubs,
-                               tenhou_name_form=tenhou_name_form)
+                               tenhou_name_form=tenhou_name_form, user=getUser(current_user.user_id))
     return redirect(url_for('index'))
 
 

@@ -136,7 +136,7 @@ async def changePass(ctx):
         return
     
     username = player.name+"#"+player.discriminator    
-    await player.send(f"Username:{username} Pass:{passwd}")
+    await player.send(f"Username: {username} Pass: {passwd}")
 
 
 #@bot.command()
@@ -159,7 +159,7 @@ async def createSiteAccount(player, chan):
         await player.send(getError())
         return
     else:
-        ret = f"Username:{username} Pass:{passwd}"
+        ret = f"Username: {username} Pass: {passwd}"
         await player.send(ret)
 
     # Can they manage this chan?
@@ -671,7 +671,7 @@ async def score(ctx, log=None, rate=None, shugi=None):
         for row in scores:
             test = getUserFromTenhouName(row.name)
             if test:
-                updateUserJade(test.id,test.jade+row.kans)
+                updateUserJade(test.user_id,test.jade+row.kans)
             ret += row.name+": Kans "+str(row.kans)+" Yaku: "+", ".join(intToYaku(row.binghou))
             ret += "\n"
     else:
