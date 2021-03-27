@@ -90,12 +90,12 @@ def updateBinghou(bing, kans, names, game):
             if hane == 6 or hane == 7:
                 bing[agari.player] = bing[agari.player] | (1 << CARD.index("Haneman"))
 
-            if getTileCount(SPECIAL_TILE) >= 2:
+            if getTileCount(agari, SPECIAL_TILE) >= 2:
                 bing[agari.player] = bing[agari.player] | (1 << CARD.index(f"2 {SPECIAL_TILE}"))
 
             if "3s" in [machi.asdata()[:2] for machi in agari.machi]:
                 bing[agari.player] = bing[agari.player] | (1 << CARD.index("3zou or Pei tanki"))
-            if "nw" in [machi.asdata()[:2] for machi in agari.machi] and getTileCount("nw") >= 2:
+            if "nw" in [machi.asdata()[:2] for machi in agari.machi] and getTileCount(agari, "nw") >= 2:
                 bing[agari.player] = bing[agari.player] | (1 << CARD.index("3zou or Pei tanki"))
 
             if len([meld for meld in agari.melds]) >= 3:
