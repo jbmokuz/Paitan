@@ -22,6 +22,9 @@ class User(UserMixin,db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     tenhou_name = db.Column(db.String(64))
+    jade = db.Column(db.Integer, nullable=False)
+    chars = db.Column(db.String(4096), nullable=False)
+    bonded = db.Column(db.String(4096), nullable=False)
 
     clubmanagement = relationship(ClubManagement, cascade="all,delete", backref="user")
     clublist = relationship(ClubList, cascade="all,delete", backref="user")

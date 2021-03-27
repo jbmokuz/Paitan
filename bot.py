@@ -24,6 +24,34 @@ EMOJI_WARNING = "⚠️"
 EMOJI_ERROR = "🚫"
 EMOJI_OK = "👍"
 
+
+FILE_PATH = "./app/static/chars"
+import glob
+BAMBOO = []
+SAKURA = []
+DEFAULT = []
+PROMO = []
+
+for n in glob.glob(f"{FILE_PATH}/bamboo/*"):
+    test = n.split("/")[-1].split("-")[0]
+    if not test in BAMBOO:
+        BAMBOO.append(test)
+
+for n in glob.glob(f"{FILE_PATH}/sakura/*"):
+    test = n.split("/")[-1].split("-")[0]
+    if not test in SAKURA:
+        SAKURA.append(test)
+
+for n in glob.glob(f"{FILE_PATH}/default/*"):
+    test = n.split("/")[-1].split("-")[0]
+    if not test in DEFAULT:
+        DEFAULT.append(test)
+
+for n in glob.glob(f"{FILE_PATH}/sakura/*"):
+    test = n.split("/")[-1].split("-")[0]
+    if not test in PROMO:
+        PROMO.append(test)
+
 async def get_vars(ctx):
     player = ctx.author
     chan = ctx.channel
@@ -52,16 +80,16 @@ def show_roulette():
         ret += " "
     return ret
 
-@bot.command()
-async def roll(ctx, dice=2):
-    """
-    roll dice
-    """
-    player, chan, club = await get_vars(ctx)
-    rolls = []
-    for i in range(dice):
-        rolls.append(random.randint(1,6))
-    await chan.send(f"{rolls}\n{sum(rolls)}")
+#@bot.command()
+#async def roll(ctx, dice=2):
+#    """
+#    roll dice
+#    """
+#    player, chan, club = await get_vars(ctx)
+#    rolls = []
+#    for i in range(dice):
+#        rolls.append(random.randint(1,6))
+#    await chan.send(f"{rolls}\n{sum(rolls)}")
 
     
 @bot.command()
@@ -149,8 +177,73 @@ async def createSiteAccount(player, chan):
     else:
         await player.send(getError())
 
-    await player.send("Manage account @ http://yakuhai.com (Currently only for guild admins)")
+    await player.send("Manage account @ https://yakuhai.com")
 
+
+@bot.command()
+async def roll(ctx, type=None):
+    """
+    Roll the gacha! (cost 2 jade)
+    Args:
+        type: Either bamboo or sakura!
+    """
+    global SAKURA
+    global BAMBOO
+    player, chan, club = await get_vars(ctx)
+
+    print(type)
+    if not (type == "bamboo" or type == "sakura"):
+        await chan.send("Must pick either bamboo or sakura")
+        return
+
+    user = getUser(player.id)
+    newChar = ""
+    #if user.jade > 2:
+    if 1==1:
+        if type == "bamboo":
+            newChar = random.choice(BAMBOO)
+        if type == "sakura":
+            newChar = random.choice(SAKURA)
+    else:
+        await chan.send("You dont have any more rolls!")
+        return
+    await chan.send("Rolling...")
+    os.popen(f"python3 emote.py gocha {newChar} 1").read()
+    if newChar in user.chars:
+        await chan.send(f"You got {newChar}! I hope that was not a duplicate... RIP")
+    else:
+        updateUserJade(player.id, user.jade - 2, newChar, None)
+        await chan.send(f"You got {newChar}!")
+
+@bot.command()
+async def bond(ctx, name=None):
+    """
+    Get all the outfits for a char! (cost 1 jade)
+    Args:
+        name: Name (WARNING: mahjong soul+ chars don't have a bond!)
+    """
+    global SAKURA
+    global BAMBOO
+    global DEFAULT
+    global PROMO
+    player, chan, club = await get_vars(ctx)
+
+    if not (name in SAKURA or name in BAMBOO or name in DEFAULT or name in PROMO):
+        await chan.send("Not a real char!")
+        return
+
+    user = getUser(player.id)
+    newChar = ""
+    #if user.jade > 1:
+    if 1==1:
+        updateUserJade(player.id, user.jade - 1, None, name)
+    else:
+        await chan.send("You dont have enughf jade!")
+        return
+    if not name in user.chars:
+        await chan.send(f"You got the new outfits and stuff for {name}! Sadly you don't own this char, what a shame!")
+    else:
+        await chan.send(f"You got the new outfits and stuff for {name}!")
 
 #@bot.command()
 async def join(ctx):
@@ -415,7 +508,7 @@ async def setTenhouName(ctx, tenhouName):
     await chan.send("Updated tenhou name!")
 
 
-#@bot.command()
+@bot.command()
 async def myInfo(ctx):
     """
     get info about you!
@@ -427,7 +520,7 @@ async def myInfo(ctx):
     if user == None:
         await chan.send(getError())
         return
-    await chan.send(f"Name: {user.user_name}\nTenhou: {user.tenhou_name}")
+    await chan.send(f"Name: {user.user_name}\nTenhou: {user.tenhou_name}\nJade: {user.jade}")
     
 @bot.command()
 async def info(ctx):
@@ -576,6 +669,9 @@ async def score(ctx, log=None, rate=None, shugi=None):
     ret = ""
     if rate == "binghou":
         for row in scores:
+            test = getUserFromTenhouName(row.name)
+            if test:
+                updateUserJade(test.id,test.jade+row.kans)
             ret += row.name+": Kans "+str(row.kans)+" Yaku: "+", ".join(intToYaku(row.binghou))
             ret += "\n"
     else:

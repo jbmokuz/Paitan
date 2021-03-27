@@ -24,41 +24,51 @@ def send_emote(char, numb):
     return render_template('emotes.html', title='emote')
 
 
+def addChars(owned, bonded, path):
+    chars = []
+    tmp = []
+    past_char = None
+    for img in sorted(glob.glob(path)):
+        img = img.split("static")[1]
+        char = img.split("/")[-1].split("-")[0]
+        numb = img.split("/")[-1].split("-")[1].split(".")[0]
+        if not char in owned:
+            continue
+        if not char in bonded and int(numb) > 9:
+            continue
+        if past_char != char and tmp != []:
+            chars.append(tmp)
+            tmp = []
+        past_char = char
+        tmp.append([img, char, numb])
+
+    chars.append(tmp)
+    return chars
+
+
 @app.route("/emotes", methods=['GET', 'POST'])
 def emotes():
     char = request.args.get('char')
     numb = request.args.get('numb')
-    print(">",char, numb)
+    user = getUser(current_user.user_id)
+    owned = user.chars.split(",")
+    bonded = user.bonded.split(",")
+
+    print(">", char, numb)
     if (char != None and numb != None):
-        print(f"python3 emote.py test {char} {numb}")
-        os.popen(f"python3 emote.py test {char} {numb}")
+        if char in owned:
+            if int(numb) <= 9:
+                os.popen(f"python3 emote.py test {char} {numb}")
+            elif char in bonded:
+                os.popen(f"python3 emote.py test {char} {numb}")
 
-    bamboo_names = set([n.split("/")[-1].split("-")[0] for n in glob.glob("./emotes/chars/bamboo/*")])
-    default_names = set([n.split("/")[-1].split("-")[0] for n in glob.glob("./emotes/chars/default/*")])
-    sakura_names = set([n.split("/")[-1].split("-")[0] for n in glob.glob("./emotes/chars/sakura/*")])
-    promo_names = set([n.split("/")[-1].split("-")[0] for n in glob.glob("./emotes/chars/promo/*")])
+    chars = []
+    chars += addChars(owned, bonded, "./app/static/chars/bamboo/*")
+    chars += addChars(owned, bonded, "./app/static/chars/sakura/*")
+    chars += addChars(owned, bonded, "./app/static/chars/default/*")
+    chars += addChars(owned, bonded, "./app/static/chars/promo/*")
 
-    bamboo = []
-    tmp = []
-    past_char = None
-    for img in sorted(glob.glob("./app/static/chars/bamboo/*")):
-        img = img.split("static")[1]
-        char = img.split("/")[-1].split("-")[0]
-        numb = img.split("/")[-1].split("-")[1].split(".")[0]
-
-        if past_char != char and tmp != []:
-            bamboo.append(tmp)
-            tmp = []
-        past_char = char
-        tmp.append([img,char,numb])
-
-    bamboo.append(tmp)
-
-    #default = set([n.split("/")[-1].split("-")[0] for n in glob.glob("./emotes/chars/default/*")])
-    #sakura = set([n.split("/")[-1].split("-")[0] for n in glob.glob("./emotes/chars/sakura/*")])
-    #promo = set([n.split("/")[-1].split("-")[0] for n in glob.glob("./emotes/chars/promo/*")])
-
-    return render_template('emotes.html', title='emote', bamboo=bamboo)
+    return render_template('emotes.html', title='emote', chars=chars, jade=user.jade)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -192,7 +202,7 @@ def club_standings(clubId):
     if club == None:
         flash("No such club")
         return redirect(url_for('index'))
-    if club.tenhou_rate.lower() == "binghou":
+    if club.tenhou_rate != None and club.tenhou_rate.lower() == "binghou":
         standings = getStandings(clubId, True)
     else:
         standings = getStandings(clubId)

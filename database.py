@@ -39,7 +39,7 @@ def createUser(userId,userName):
     
     password = ''.join([random.choice(string.printable[:62]) for i in range(16)])
 
-    u = User(user_id=userId,user_name=userName)
+    u = User(user_id=userId,user_name=userName,jade=2,chars="wanjirou,ichihime",bonded="")
     u.set_password(password)
     db.session.add(u)
     return password
@@ -511,6 +511,22 @@ def updateClubTourney(clubId, tourneyId):
         LAST_ERROR = "No such club"
         return None
     club.tourney_id = tourneyId
+    return 0
+
+
+@saveInstance
+def updateUserJade(userId, jade, char=None, bond=None):
+    global LAST_ERROR
+
+    user = getUser(userId)
+    if user == None:
+        LAST_ERROR = "No such user"
+        return None
+    user.jade = jade
+    if char != None:
+        user.chars += ","+char
+    if bond != None:
+        user.bonded += ","+bond
     return 0
 
 @saveInstance

@@ -21,7 +21,7 @@ tr:nth-child(even) {
 </style>
 
 
-{% if club.tenhou_rate.lower() == "binghou" %}
+{% if club.tenhou_rate != None and club.tenhou_rate.lower() == "binghou" %}
 
 <h1> Kantest standings </h1>
 
@@ -34,7 +34,7 @@ tr:nth-child(even) {
   <table>
     <tr>
       <th>Name</th>
-      {% if club.tenhou_rate.lower() == "binghou" %}
+      {% if club.tenhou_rate != None and club.tenhou_rate.lower() == "binghou" %}
       <th>Kans</th>
       {% else %}
       <th>Score</th>
@@ -42,7 +42,7 @@ tr:nth-child(even) {
     </tr>
       {% for score,name in standings %}
     <tr>
-      {% if club.tenhou_rate.lower() == "binghou" %}
+      {% if club.tenhou_rate != None and club.tenhou_rate.lower() == "binghou" %}
       <th><a href="{{ url_for('binghou',userName=name)}}">{{name}}</a></th>
       {% else %}
       <th>{{name}}</th>
