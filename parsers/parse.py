@@ -3,10 +3,10 @@ from parsers.TenhouDecoder import getGameObject
 
 
 class TablePlayer():
-    def __init__(self, name, score, shugi, payout, binghou, kans):
+    def __init__(self, name, score, payout, shugi, binghou, kans):
         self.name = name
         self.score = score
-        self.payout = None
+        self.payout = payout
         self.shugi = shugi
         self.binghou = binghou
         self.kans = kans
@@ -48,10 +48,10 @@ BINGHOU = TableRate(name="binghou", rate=1, shugi=0, start=30000, target=30000, 
 
 SPECIAL_TILE = "9pin"
 
-CARD = ["Honitsu", ">Ura2", "Ikkitsuukan", ">50fu", "Haneman",
-        "Riichi Nomi", "Jikaze", "Ippatsu", "Tanyao", "Chinitsu",
+CARD = ["Honitsu", "Ura3", "Ikkitsuukan", ">50fu", "Haneman",
+        "Nomi Gang", "Jikaze", "Ippatsu", "Tanyao", "Chinitsu",
         "Chanta", "Riichi", "Kan!", "Uradora", "Chiitoitsu",
-        "3Melds", "Yakuhai", "Menzen", "Sanshoku", "3zou Win",
+        "3Melds", "Yakuhai", "Menzen", "Sanshoku", "3zou or Pei tanki",
         "Other Yaku", f"2 {SPECIAL_TILE}", "Pinfu", "Iipeikou", "Toitoi"]
 
 
@@ -65,7 +65,15 @@ def intToYaku(i):
         i = i >> 1
     return ret
 
-
+def getTileCount(agari,countTile):
+    tileCount = 0
+    for meld in agari.melds:
+        for tile in meld.tiles:
+            if tile.asdata()[:2] == countTile[:2]:
+                tileCount += 1
+    tileCount += len([i for i in agari.hand if countTile[:2] in i.asdata()[:2]])
+    return tileCount
+    
 def updateBinghou(bing, kans, names, game):
     global CARD
 
@@ -82,19 +90,13 @@ def updateBinghou(bing, kans, names, game):
             if hane == 6 or hane == 7:
                 bing[agari.player] = bing[agari.player] | (1 << CARD.index("Haneman"))
 
-            tileCount = 0
-
-            for meld in agari.melds:
-                for tile in meld.tiles:
-                    if tile.asdata()[:2] == SPECIAL_TILE[:2]:
-                        tileCount += 1
-            tileCount += len([i for i in agari.hand if SPECIAL_TILE[:2] in i.asdata()[:2]])
-
-            if tileCount >= 2:
+            if getTileCount(SPECIAL_TILE) >= 2:
                 bing[agari.player] = bing[agari.player] | (1 << CARD.index(f"2 {SPECIAL_TILE}"))
 
             if "3s" in [machi.asdata()[:2] for machi in agari.machi]:
-                bing[agari.player] = bing[agari.player] | (1 << CARD.index("3zou Win"))
+                bing[agari.player] = bing[agari.player] | (1 << CARD.index("3zou or Pei tanki"))
+            if "nw" in [machi.asdata()[:2] for machi in agari.machi] and getTileCount("nw") >= 2:
+                bing[agari.player] = bing[agari.player] | (1 << CARD.index("3zou or Pei tanki"))
 
             if len([meld for meld in agari.melds]) >= 3:
                 bing[agari.player] = bing[agari.player] | (1 << CARD.index("3Melds"))
@@ -108,9 +110,9 @@ def updateBinghou(bing, kans, names, game):
                 elif yaku != "Uradora" and yaku != "Dora" and yaku != "Akadora":
                     bing[agari.player] = bing[agari.player] | (1 << CARD.index("Other Yaku"))
                 if yaku == 'Uradora' and han > 2:
-                    bing[agari.player] = bing[agari.player] | (1 << CARD.index(">Ura2"))
-                if yaku == "Riichi" and sum([i[1] for i in agari.yaku]) == 1:
-                    bing[agari.player] = bing[agari.player] | (1 << CARD.index("Riichi Nomi"))
+                    bing[agari.player] = bing[agari.player] | (1 << CARD.index("Ura3"))
+                if (yaku == "Riichi" or yaku == "Haitei" or yaku == "Houtei" or yaku == "Rinshan") and sum([i[1] for i in agari.yaku]) == 1:
+                    bing[agari.player] = bing[agari.player] | (1 << CARD.index("Nomi Gang"))
                 if yaku == "Chankan":
                     kans[agari.player] += 5
 
@@ -184,14 +186,13 @@ def parseTenhou(log):
     print("BING", [intToYaku(i) for i in binghou])
 
     for i in range(len(names)):
-        ret.append(TablePlayer(names[i], int(scores[i]), int(shugi[i]), 0, binghou[i], kans[i]))
+        ret.append(TablePlayer(names[i], int(scores[i]), 0, int(shugi[i]), binghou[i], kans[i]))
 
     return ret
 
 
 def scorePayout(players, tableRate):
     players.sort(key=lambda x: x.score, reverse=True)
-
     lastScore = ""
     lastScore += f"{tableRate}\n\n"
     lastScore += f"All players begin with **Start**[{tableRate.start}] points and pay the difference of the **Target**[{tableRate.target}] to first place\n"
@@ -201,7 +202,7 @@ def scorePayout(players, tableRate):
     oka = [tableRate.oka] + [0] * len(players)  # giving 1st place oka bonus
     for i, p in enumerate(players):
         #name, p.score, shugi, binghou, kans = p
-        p.score = p.score * 100
+        score = p.score * 100
         lastScore += f"#{i + 1}Place: (Score[{p.score}] + Oka[{oka[i]}] - Target[({tableRate.target})])/1000) × Rate[{tableRate.rate}] = ${((p.score + oka[i] - tableRate.target) / 1000) * tableRate.rate:.2f}\n"
 
     lastScore += "\n"
@@ -221,12 +222,12 @@ def scorePayout(players, tableRate):
 
     ret = []
     for i, p in enumerate(players):
-        #name, score, shugi, binghou, kans = p
+
         score = p.score * 100
         calc = (((score + oka[i] - tableRate.target) / 1000) + tableRate.uma[
             i]) * tableRate.rate + tableRate.shugi * p.shugi
         payout = round(calc, 2)
-        ret.append(TablePlayer(p.name, score, p.shugi, payout, p.binghou, p.kans))
+        ret.append(TablePlayer(p.name, score, payout, p.shugi, p.binghou, p.kans))
         lastScore += f"#{i + 1}Place: (((({score}+{oka[i]}-{tableRate.target})/1000)+{tableRate.uma[i]})×{tableRate.rate}+{tableRate.shugi}×{p.shugi}) = ${payout}\n"
 
     return [ret, lastScore]

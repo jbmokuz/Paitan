@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<html>
+  <head>
+        {% if current_user.is_authenticated %}
+	    {% for charList in bamboo %}
+                <h1>{{charList[0][1]}}</h1>
+   	        {% for img, char, numb in charList %}
+	            <a href="{{ url_for('emotes') }}?char={{char}}&numb={{numb}}">
+	            <img src="{{url_for('static', filename=img)}}" width="75" height="75"/>
+		</a>
+		{% endfor %}
+		<br>
+    	    {% endfor %}
+	{% else %}
+	<h1>Please login to use emotes!</h1>
+	{% endif %}
+    </head>
+    <body>
+    </body>
+</html>
+{% endblock %}

@@ -92,7 +92,6 @@ async def pull_tile(ctx):
         await chan.send("It was a blank")
     ROULETTE[pos] += 2
     await chan.send(show_roulette())
-    
 
 #################
     
@@ -458,9 +457,6 @@ def formatScores(players,tableRate):
     table = [["Score","","Pay","Name"]]
 
     for row in players:
-
-        #name, score, shugi, payout, bing, kans = row
-        
         score = str(row.score)
         shugi = str(row.shugi)
         payout = str(row.payout)
@@ -491,14 +487,12 @@ async def score(ctx, log=None, rate=None, shugi=None):
         log:
             A full url or just the log id
         rate (optional):
-            tensan(default), tengo, or tenpin
+            standard(default), tensan, tengo, tenpin, or binghou
         shugi (optional):
             defaults to the rate shugi
     """
     player, chan, club = await get_vars(ctx)
-    
-    print("Rate",club.tenhou_rate)
-    
+
     if rate == None:
         rate = club.tenhou_rate
 
@@ -508,6 +502,7 @@ async def score(ctx, log=None, rate=None, shugi=None):
         if rate == None:
             message = "No default rate set\n"+message
         await chan.send(message)
+        return
         
     if rate != None:
         rate = rate.lower()
@@ -525,10 +520,13 @@ async def score(ctx, log=None, rate=None, shugi=None):
         tableRate = copy.deepcopy(STANDARD)
     elif rate == "binghou":
         tableRate = copy.deepcopy(BINGHOU)
+    elif rate != None:
+        await ctx.message.add_reaction(EMOJI_ERROR)    
+        await chan.send(f"{rate} is not a valid rate (try $help score)")
+        return
     else:
         tableRate = copy.deepcopy(STANDARD)
-        #await chan.send(f"{rate} is not a valid rate (try !help score)")
-        #return
+
 
     if(shugi != None):
         try:
@@ -544,6 +542,7 @@ async def score(ctx, log=None, rate=None, shugi=None):
         await ctx.message.add_reaction(EMOJI_ERROR)
         await chan.send(getError())
         return
+
     # This is part of a hack to keep seat order
     seatOrder = [i.name for i in players]
     # Calculates the score and also the explination of how the score was calculated
@@ -577,7 +576,6 @@ async def score(ctx, log=None, rate=None, shugi=None):
     ret = ""
     if rate == "binghou":
         for row in scores:
-            #name, score, shugi, payout, bing, kans = row.getList()
             ret += row.name+": Kans "+str(row.kans)+" Yaku: "+", ".join(intToYaku(row.binghou))
             ret += "\n"
     else:

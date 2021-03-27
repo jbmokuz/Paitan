@@ -21,16 +21,32 @@ tr:nth-child(even) {
 </style>
 
 
+{% if club.tenhou_rate.lower() == "binghou" %}
+
 <h1> Kantest standings </h1>
+
+{% else %}
+
+<h1> Standings </h1>
+
+{% endif %}
   
   <table>
     <tr>
       <th>Name</th>
+      {% if club.tenhou_rate.lower() == "binghou" %}
       <th>Kans</th>
+      {% else %}
+      <th>Score</th>
+      {% endif %}
     </tr>
       {% for score,name in standings %}
     <tr>
+      {% if club.tenhou_rate.lower() == "binghou" %}
       <th><a href="{{ url_for('binghou',userName=name)}}">{{name}}</a></th>
+      {% else %}
+      <th>{{name}}</th>
+      {% endif %}
       <th>{{ score }}</th>
     </tr>
       {% endfor %}

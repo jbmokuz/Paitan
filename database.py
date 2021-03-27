@@ -561,7 +561,7 @@ def startNextRound(tourneyId, roundNumber=None):
 
 
 
-def getStandings(clubId):
+def getStandings(clubId,binghou=False):
     
     games = getGamesForClub(clubId)
 
@@ -571,26 +571,34 @@ def getStandings(clubId):
         if g.ton != None:
             if not g.ton in rank:
                 rank[g.ton] = 0
-            #rank[g.ton] += g.ton_payout
-            rank[g.ton] += g.ton_kan            
+            if (binghou):
+                rank[g.ton] += g.ton_kan
+            else:
+                rank[g.ton] += g.ton_payout
 
         if g.nan != None:
             if not g.nan in rank:
                 rank[g.nan] = 0
-            #rank[g.nan] += g.nan_payout
-            rank[g.nan] += g.nan_kan            
+            if (binghou):
+                rank[g.nan] += g.nan_kan
+            else:
+                rank[g.nan] += g.nan_payout
 
         if g.xia != None:
             if not g.xia in rank:
                 rank[g.xia] = 0
-            #rank[g.xia] += g.xia_payout
-            rank[g.xia] += g.xia_kan            
+            if (binghou):
+                rank[g.xia] += g.xia_kan
+            else:
+                rank[g.xia] += g.xia_payout
 
         if g.pei != None:
             if not g.pei in rank:
                 rank[g.pei] = 0
-            #rank[g.pei] += g.pei_payout
-            rank[g.pei] += g.pei_kan         
+            if (binghou):
+                rank[g.pei] += g.pei_kan
+            else:
+                rank[g.pei] += g.pei_payout
 
 
     ordered = []
