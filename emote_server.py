@@ -10,7 +10,7 @@ HOST = '127.0.0.1'
 PORT = 7501
 
 TOKEN = os.environ["DISCORD_DEV_TOKEN"]  
-bot = commands.Bot("$")
+bot = commands.Bot("&")
 
 guild_name = "bot_testing"
 #emote_chan_name = sys.argv[1]
@@ -30,14 +30,12 @@ sakura = set([n.split("/")[-1].split("-")[0] for n in glob.glob(f"{FILE_PATH}/sa
 
 @bot.event
 async def on_ready():
-    print("ready")
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((HOST, PORT))
         s.listen()
         while 1:                        
             conn, addr = s.accept()
             with conn:
-                print('Connected by', addr)
                 while True:
                     data = conn.recv(1024)
                     print(data)
@@ -45,13 +43,11 @@ async def on_ready():
                         emote_chan_name, char, numb = data.decode("utf-8").split(",")
                         print(char)
                         for guild in bot.guilds:
-                            print("starting")
                             if guild.name == guild_name:
                                 for chan in guild.text_channels:
                                     if str(chan) == emote_chan_name:
                                         #try:
                                         if 1==1:
-                                                print("WE ARE IN")
                                                 if char in bamboo:
                                                     file = discord.File(f"{FILE_PATH}/bamboo/{char}-{numb}.png", filename="image.png")
                                                 elif char in default:

@@ -24,9 +24,9 @@ EMOJI_WARNING = "⚠️"
 EMOJI_ERROR = "🚫"
 EMOJI_OK = "👍"
 
-
 FILE_PATH = "./app/static/chars"
 import glob
+
 BAMBOO = []
 SAKURA = []
 DEFAULT = []
@@ -52,18 +52,20 @@ for n in glob.glob(f"{FILE_PATH}/sakura/*"):
     if not test in PROMO:
         PROMO.append(test)
 
+
 async def get_vars(ctx):
     player = ctx.author
     chan = ctx.channel
     club = getClub(chan.guild.id)
     if club == None:
-        createClub(chan.guild.id,chan.guild.name)
+        createClub(chan.guild.id, chan.guild.name)
     club = getClub(chan.guild.id)
     if not getUser(player.id):
-        await createSiteAccount(player,chan)
+        await createSiteAccount(player, chan)
     return player, chan, club
 
-#id=119046709983707136 name='moku' discriminator='9015'
+
+# id=119046709983707136 name='moku' discriminator='9015'
 
 ## ROULETTE ##
 
@@ -80,8 +82,9 @@ def show_roulette():
         ret += " "
     return ret
 
-#@bot.command()
-#async def roll(ctx, dice=2):
+
+# @bot.command()
+# async def roll(ctx, dice=2):
 #    """
 #    roll dice
 #    """
@@ -91,22 +94,23 @@ def show_roulette():
 #        rolls.append(random.randint(1,6))
 #    await chan.send(f"{rolls}\n{sum(rolls)}")
 
-    
+
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def load_and_spin(ctx):
     global ROULETTE
     player, chan, club = await get_vars(ctx)
-    ROULETTE = [0,0,0,0,0,1]
+    ROULETTE = [0, 0, 0, 0, 0, 1]
     random.shuffle(ROULETTE)
     await chan.send(show_roulette())
-    
-@bot.command()    
+
+
+@bot.command()
 @commands.has_permissions(administrator=True)
 async def pull_tile(ctx):
     global ROULETTE
     player, chan, club = await get_vars(ctx)
-    pos = len([i for i in ROULETTE if i < 2])-1
+    pos = len([i for i in ROULETTE if i < 2]) - 1
     if ROULETTE[pos] == 1:
         await chan.send("BANG!")
         time.sleep(2)
@@ -121,8 +125,9 @@ async def pull_tile(ctx):
     ROULETTE[pos] += 2
     await chan.send(show_roulette())
 
+
 #################
-    
+
 @bot.command()
 async def changePass(ctx):
     """
@@ -134,13 +139,13 @@ async def changePass(ctx):
     if passwd == None:
         await player.send(getError())
         return
-    
-    username = player.name+"#"+player.discriminator    
+
+    username = player.name + "#" + player.discriminator
     await player.send(f"Username: {username} Pass: {passwd}")
 
 
-#@bot.command()
-#async def createAccount(ctx):
+# @bot.command()
+# async def createAccount(ctx):
 #    """
 #    Create an account for this guild
 #    """
@@ -149,12 +154,11 @@ async def changePass(ctx):
 
 
 async def createSiteAccount(player, chan):
-    
-    username = player.name+"#"+player.discriminator
+    username = player.name + "#" + player.discriminator
 
     # This is the only time we have the password for a user
     # The password hash is stored
-    passwd = createUser(player.id,username)
+    passwd = createUser(player.id, username)
     if passwd == None:
         await player.send(getError())
         return
@@ -164,14 +168,14 @@ async def createSiteAccount(player, chan):
 
     # Can they manage this chan?
     if player.guild_permissions.administrator:
-        ret = addUserToClubManage(chan.guild.id,player.id)
+        ret = addUserToClubManage(chan.guild.id, player.id)
         if ret != None:
             await player.send(f"Now managing {chan.guild.name}")
         else:
             await player.send(getError())
 
     # Add user to chan
-    ret = addUserToClub(chan.guild.id,player.id)
+    ret = addUserToClub(chan.guild.id, player.id)
     if ret != None:
         await player.send(f"You are now a member of {chan.guild.name}")
     else:
@@ -198,29 +202,29 @@ async def roll(ctx, type=None):
 
     user = getUser(player.id)
     newChar = ""
-    #if user.jade > 2:
-    if 1==1:
+    if user.jade > 2:
         if type == "bamboo":
             newChar = random.choice(BAMBOO)
         if type == "sakura":
             newChar = random.choice(SAKURA)
     else:
-        await chan.send("You dont have any more rolls!")
+        await chan.send(f"You only have {user.jade} jade!")
         return
     await chan.send("Rolling...")
-    os.popen(f"python3 emote.py gocha {newChar} 1").read()
+    os.popen(f"python3 emote_client.py gocha {newChar} 1").read()
     if newChar in user.chars:
         await chan.send(f"You got {newChar}! I hope that was not a duplicate... RIP")
     else:
         updateUserJade(player.id, user.jade - 2, newChar, None)
         await chan.send(f"You got {newChar}!")
 
+
 @bot.command()
 async def bond(ctx, name=None):
     """
     Get all the outfits for a char! (cost 1 jade)
     Args:
-        name: Name (WARNING: mahjong soul+ chars don't have a bond!)
+        name: Name (WARNING: mahjong soul+ don't have a bond (Washizu does though)!)
     """
     global SAKURA
     global BAMBOO
@@ -233,47 +237,58 @@ async def bond(ctx, name=None):
         return
 
     user = getUser(player.id)
-    newChar = ""
-    #if user.jade > 1:
-    if 1==1:
+    if user.jade > 1:
         updateUserJade(player.id, user.jade - 1, None, name)
     else:
-        await chan.send("You dont have enughf jade!")
+        await chan.send(f"You only have {user.jade} jade!")
         return
     if not name in user.chars:
         await chan.send(f"You got the new outfits and stuff for {name}! Sadly you don't own this char, what a shame!")
     else:
         await chan.send(f"You got the new outfits and stuff for {name}!")
 
-#@bot.command()
+@bot.command()
+async def setTable(ctx, table="general"):
+    """
+    Set the table you are emoting at!
+    Args:
+        chan_name: Name of the chan (Ex:table1)!
+    """
+    player, chan, club = await get_vars(ctx)
+    ret = updateUserTable(player.id, table)
+    if ret == None:
+        await chan.send(getError())
+        return
+    await chan.send(f"Updated to table {table}")
+
+
+# @bot.command()
 async def join(ctx):
     """
     Join current tourney
     """
     player, chan, club = await get_vars(ctx)
-    ret = addUserToTourney(club.tourney_id,player.id)
+    ret = addUserToTourney(club.tourney_id, player.id)
 
     if ret == None:
-
         await chan.send(getError())
         return
 
     await chan.send("Added!")
 
-#@bot.command()
+# @bot.command()
 async def leave(ctx):
     """
     Join current tourney
     """
     player, chan, club = await get_vars(ctx)
-    ret = removeUserFromTourney(club.tourney_id,player.id)
+    ret = removeUserFromTourney(club.tourney_id, player.id)
     if ret == None:
         await chan.send(getError())
         return
     await chan.send("Removed")
 
-
-#@bot.command()
+# @bot.command()
 async def kick(ctx, userName):
     """
     kick a player from a tourney
@@ -283,14 +298,14 @@ async def kick(ctx, userName):
     user = getUserFromUserName(userName)
     if user == None:
         await chan.send("Could not find user by that name")
-    
-    ret = removeUserFromTourney(club.tourney_id,player.id)
+
+    ret = removeUserFromTourney(club.tourney_id, player.id)
     if ret == None:
         await chan.send(getError())
         return
     await chan.send("Removed")
-    
-#@bot.command()
+
+# @bot.command()
 async def list(ctx):
     """
     Join current tourney
@@ -304,7 +319,7 @@ async def list(ctx):
 
     ret = "```"
     # Havent shuffled for tables yet
-    if tourney.current_round == 0:    
+    if tourney.current_round == 0:
         users = getUsersForTourney(club.tourney_id)
         if users == []:
             await chan.send("No users have joined")
@@ -312,24 +327,24 @@ async def list(ctx):
         for u in users:
             ret += u.user_name
             if u.tenhou_name != None:
-                ret += " ("+u.tenhou_name+")"
+                ret += " (" + u.tenhou_name + ")"
             ret += "\n"
 
     else:
         ret += printTables(tourney)
-        
+
     ret += "```"
     await chan.send(ret)
 
-    
-#@bot.command()
-#@commands.has_permissions(administrator=True)
+
+# @bot.command()
+# @commands.has_permissions(administrator=True)
 async def shuffle(ctx):
     """
     Shuffle for list for tables
     """
     player, chan, club = await get_vars(ctx)
-    
+
     if club.tourney_id == None:
         await chan.send("No tourney is currently running")
         return
@@ -339,21 +354,21 @@ async def shuffle(ctx):
 
     # We are starting the next round now!
     startNextRound(club.tourney_id)
-    
+
     ret = "```"
 
     # First round is just random
     if tourney.current_round == 1:
 
-        random.shuffle(users)        
-        tables = [[u.user_id for u in users[i:i+4]] for i in range(0,len(users),4)]
+        random.shuffle(users)
+        tables = [[u.user_id for u in users[i:i + 4]] for i in range(0, len(users), 4)]
 
-        
+
     # We want to ensure no one plays anyone they played the first round
     # Need at least 16 people, but should still get you the least overlap?
     else:
-        
-        tables = getTablesForRoundTourney(tourney.tourney_id,tourney.current_round-1)
+
+        tables = getTablesForRoundTourney(tourney.tourney_id, tourney.current_round - 1)
 
         byes = []
 
@@ -374,11 +389,11 @@ async def shuffle(ctx):
             random.shuffle(t)
 
         # Make it so the tables have no repeating players
-        for off in range(1,4):
+        for off in range(1, 4):
             tmp = [[] for i in tables]
-            for i,t in enumerate(tables):
+            for i, t in enumerate(tables):
                 tmp[i] += tables[i][:off]
-                tmp[i] += tables[(i+1)%len(tables)][off:]
+                tmp[i] += tables[(i + 1) % len(tables)][off:]
             tables = tmp
 
         count = 0
@@ -391,25 +406,25 @@ async def shuffle(ctx):
             tables[count][i] = b
             newByes.append(tmp)
             count = (count + 1) % len(tables)
-            
+
         tables += [newByes]
 
     for t in tables:
         if len(t) < 4:
             t += [None for i in range(4 - len(t))]
         createTable(tourney.tourney_id, tourney.current_round, t[0], t[1], t[2], t[3])
-        
+
     # Now we print the stuff out
-    
+
     ret += printTables(tourney)
     ret += "```"
 
-
     await chan.send(ret)
 
-#@bot.command()
-#@commands.has_permissions(administrator=True)
-async def topCut(ctx,numberOfTables):
+
+# @bot.command()
+# @commands.has_permissions(administrator=True)
+async def topCut(ctx, numberOfTables):
     """
     Cut the top number of tables
     """
@@ -420,9 +435,9 @@ async def topCut(ctx,numberOfTables):
     except:
         await chan.send("ERROR: Number of tables must be a number")
         return
-    
+
     player, chan, club = await get_vars(ctx)
-    
+
     if club.tourney_id == None:
         await chan.send("No tourney is currently running")
         return
@@ -433,18 +448,18 @@ async def topCut(ctx,numberOfTables):
     # We are starting the next round now!
     # startNextRound(club.tourney_id)
     standings = getStandings(club.tourney_id)
-    standings = standings[:4*numberOfTables]
+    standings = standings[:4 * numberOfTables]
 
     if len(standings) == 0:
         await chan.send("No scores are in to do a top cut")
         return
-    
+
     startNextRound(club.tourney_id)
-    
+
     print(standings)
     for pos in range(numberOfTables):
         players = []
-        for player in standings[pos*4:pos*4+4]:
+        for player in standings[pos * 4:pos * 4 + 4]:
             p = getUserFromTenhouName(player[1])
             if p == None:
                 await chan.send(f"Warning: player {player} is not registered")
@@ -458,18 +473,18 @@ async def topCut(ctx,numberOfTables):
     ret += "```"
 
     await chan.send(ret)
-    
-def printTables(tourney):
 
+
+def printTables(tourney):
     ret = f"\n\nRound: {tourney.current_round}\n"
-    
-    tables = getTablesForRoundTourney(tourney.tourney_id,tourney.current_round)
+
+    tables = getTablesForRoundTourney(tourney.tourney_id, tourney.current_round)
 
     count = 0
-    
+
     for table in tables:
 
-        count += 1        
+        count += 1
 
         if table.pei == None:
             ret += f"\n===   Byes  ===\n"
@@ -479,27 +494,27 @@ def printTables(tourney):
             else:
                 ret += f"\n=== Table {count} ===\n"
 
-
         for uId in [table.ton, table.nan, table.xia, table.pei]:
             if uId != None:
                 user = getUser(uId)
                 if user == None:
-                    print (f"ERROR: Could not find user {uId}")
+                    print(f"ERROR: Could not find user {uId}")
                 else:
                     ret += user.user_name
                     if user.tenhou_name != None:
-                        ret += " "+user.tenhou_name
+                        ret += " " + user.tenhou_name
             ret += "\n"
 
     return ret
-    
-#@bot.command()
+
+
+# @bot.command()
 async def setTenhouName(ctx, tenhouName):
     """
     Set your tenhou name!
     """
     player, chan, club = await get_vars(ctx)
-    
+
     ret = updateUserTenhouName(player.id, tenhouName)
     if ret == None:
         await chan.send(getError())
@@ -521,7 +536,8 @@ async def myInfo(ctx):
         await chan.send(getError())
         return
     await chan.send(f"Name: {user.user_name}\nTenhou: {user.tenhou_name}\nJade: {user.jade}")
-    
+
+
 @bot.command()
 async def info(ctx):
     """
@@ -533,39 +549,38 @@ async def info(ctx):
     tourney = getTourney(club.tourney_id)
 
     if tourney != None:
-        ret += f"Current Tourney: {tourney.tourney_name} {tourney.tourney_id}\n\n"
-    
+        ret += f"Current Tourney: {tourney.tourney_name} {tourney.tourney_id} Round: {tourney.current_round}\n\n"
+
     if not club.tenhou_room == None:
         ret += f"Tenhou: https://tenhou.net/0/?{club.tenhou_room[0:9]}\n\n"
-        
+
     ret += "Add Chii-tan to your server: https://discord.com/api/oauth2/authorize?client_id=732219732547076126&permissions=268957760&scope=bot\n\n"
     ret += "Website: http://yakuhai.com\n\n"
     ret += "Source: https://github.com/jbmokuz/Paitan\n\n```"
-    
+
     await chan.send(ret)
 
 
-def formatScores(players,tableRate):
-
-    table = [["Score","","Pay","Name"]]
+def formatScores(players, tableRate):
+    table = [["Score", "", "Pay", "Name"]]
 
     for row in players:
         score = str(row.score)
         shugi = str(row.shugi)
         payout = str(row.payout)
         if not "-" in shugi:
-            shugi = "+"+shugi
+            shugi = "+" + shugi
         if not "-" in payout:
-            payout = "+"+payout       
-        table.append([str(score),str(shugi),str(payout),str(row.name)])
+            payout = "+" + payout
+        table.append([str(score), str(shugi), str(payout), str(row.name)])
 
     colMax = [max([len(i) for i in c]) for c in zip(*table)]
     colMax[-1] = 0
-    
+
     ret = f"```{tableRate}\n"
     for row in table:
-        for i,col in enumerate(colMax):
-            ret += row[i].ljust(col+1)
+        for i, col in enumerate(colMax):
+            ret += row[i].ljust(col + 1)
         ret += "\n"
     ret += "```"
 
@@ -593,16 +608,16 @@ async def score(ctx, log=None, rate=None, shugi=None):
         await ctx.message.add_reaction(EMOJI_ERROR)
         message = "usage: $score [tenhou_log] [rate]\nEx: $score https://tenhou.net/0/?log=2020051313gm-0209-19713-10df4ad2&tw=1 tengo"
         if rate == None:
-            message = "No default rate set\n"+message
+            message = "No default rate set\n" + message
         await chan.send(message)
         return
-        
+
     if rate != None:
         rate = rate.lower()
     tableRate = None
 
     # Pick the proper table rate
-    
+
     if rate == "tensan" or rate == "0.3" or rate == ".3":
         tableRate = copy.deepcopy(TENSAN)
     elif rate == "tengo" or rate == "0.5" or rate == ".5":
@@ -614,16 +629,15 @@ async def score(ctx, log=None, rate=None, shugi=None):
     elif rate == "binghou":
         tableRate = copy.deepcopy(BINGHOU)
     elif rate != None:
-        await ctx.message.add_reaction(EMOJI_ERROR)    
+        await ctx.message.add_reaction(EMOJI_ERROR)
         await chan.send(f"{rate} is not a valid rate (try $help score)")
         return
     else:
         tableRate = copy.deepcopy(STANDARD)
 
-
-    if(shugi != None):
+    if (shugi != None):
         try:
-            tableRate.shugi = round(float(shugi),3)
+            tableRate.shugi = round(float(shugi), 3)
         except:
             await ctx.message.add_reaction(EMOJI_ERROR)
             await chan.send(f"{shugi} is not a valid shugi")
@@ -642,44 +656,49 @@ async def score(ctx, log=None, rate=None, shugi=None):
     scores, explain = scorePayout(players, tableRate)
     # Gets the unique id for the log
     logId = getLogId(log)
-    
+
     # @TODO this is really hacky
     scoresOrdered = []
     for i, p in enumerate(players):
         scoresOrdered.append([x for x in scores if x.name == seatOrder[i]][0])
 
     # Add scores to db
-    
-    game = createTenhouGame(logId,scoresOrdered,tableRate.name)
-    
+    if club.tourney_id != None:
+        tourney = getTourney(club.tourney_id)
+        game = createTenhouGame(logId, scoresOrdered, tableRate.name, tourney.current_round)
+    else:
+        game = createTenhouGame(logId, scoresOrdered, tableRate.name)
+
     if game == None:
-        #await chan.send(getError())
+        # await chan.send(getError())
         await ctx.message.add_reaction(EMOJI_WARNING)
         await chan.send("WARNING: Already scored that game! Will not be added\nHere are results anyways")
     else:
         ret = addGameToClub(club.club_id, game.tenhou_game_id)
+        if club.tourney_id != None:
+            addGameToTourney(club.tourney_id, game.tenhou_game_id)
         if ret == None:
             await ctx.message.add_reaction(EMOJI_ERROR)
             await chan.send(getError())
             return
-    
-    #print(explain)
-    #if 
-    #await chan.send(formatScores(scores, tableRate))
+
+    # print(explain)
+    # if
+    # await chan.send(formatScores(scores, tableRate))
     ret = ""
     if rate == "binghou":
         for row in scores:
             test = getUserFromTenhouName(row.name)
-            if test:
-                updateUserJade(test.user_id,test.jade+row.kans)
-            ret += row.name+": Kans "+str(row.kans)+" Yaku: "+", ".join(intToYaku(row.binghou))
+            if test and row.kans > 0:
+                updateUserJade(test.user_id, test.jade + row.kans)
+            ret += row.name + ": Kans " + str(row.kans) + " Yaku: " + ", ".join(intToYaku(row.binghou))
             ret += "\n"
     else:
         ret += formatScores(scores, tableRate)
 
     await ctx.message.add_reaction(EMOJI_OK)
     await chan.send(ret)
-    
+
     """
     for guild in bot.guilds:
         for log_chan in guild.text_channels:
@@ -689,9 +708,9 @@ async def score(ctx, log=None, rate=None, shugi=None):
                 await log_chan.send(ret)
     """
 
-    
+
 @bot.command()
-async def start(ctx, p1=None, p2=None, p3=None, p4=None, randomSeat="true"):
+async def start(ctx, p1=None, p2=None, p3=None, p4=None, table="general", randomSeat="true"):
     """
     Start Tenhou Game
     Args:
@@ -699,36 +718,42 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, randomSeat="true"):
     """
 
     player, chan, club = await get_vars(ctx)
-    
+
     if (p1 == None or p2 == None or p3 == None or p4 == None):
         await chan.send(f"Please specify 4 players space separated")
         return
 
-    player_names = [p1,p2,p3,p4]
+    player_names = [p1, p2, p3, p4]
+
+    users = [getUserFromTenhouName(u) for u in player_names]
+    for u in users:
+        if u:
+            updateUserTable(u.user_id, table)
 
     print(f"Starting, Admin:{club.tenhou_room} Rules:{club.tenhou_rules}")
-    
+
     data = {
-        "L":club.tenhou_room,
-        "R2":club.tenhou_rules,
-        "RND":"default",
-        "WG":"1"
-        }
-    
+        "L": club.tenhou_room,
+        "R2": club.tenhou_rules,
+        "RND": "default",
+        "WG": "1"
+    }
+
     if randomSeat.lower() != "false" and randomSeat.lower() != "no":
         random.shuffle(player_names)
-        #data["RANDOMSTART"] = "on"
-        
+        # data["RANDOMSTART"] = "on"
+
     data["M"] = "\r\n".join(player_names)
 
-    resp = requests.post('https://tenhou.net/cs/edit/cmd_start.cgi',data=data)
+    resp = requests.post('https://tenhou.net/cs/edit/cmd_start.cgi', data=data)
     if resp.status_code != 200:
         await chan.send(f"http error {resp.status_code} :<")
         return
     await chan.send(urllib.parse.unquote(resp.text))
 
-#@bot.command()
-#@commands.has_permissions(administrator=True)
+
+@bot.command()
+@commands.has_permissions(administrator=True)
 async def startTourney(ctx, *args):
     """
     Start a Tourney on the server!
@@ -739,48 +764,47 @@ async def startTourney(ctx, *args):
 
     if len(args) < 1:
         await chan.send("Please specify a tourney name!")
-        return 
-    
+        return
+
     if club.tourney_id != None:
         await chan.send("Already have a tournament started!")
-        return        
+        return
 
-    tourney = createTourney( " ".join(args))
+    tourney = createTourney(" ".join(args), club.tenhou_rate)
 
     if updateClubTourney(club.club_id, tourney.tourney_id) == None:
         await chan.send(getError())
-        return        
-    
+        return
+
     if tourney == None:
         await chan.send("Already have a tournament by that name!")
         return
 
     await chan.send(f"Started Tourney '{getTourney(club.tourney_id).tourney_name}'")
 
-    
-#@bot.command()
-#@commands.has_permissions(administrator=True)
+
+@bot.command()
+@commands.has_permissions(administrator=True)
 async def endTourney(ctx):
     """
     End a Tourney on the server!
     """
     player, chan, club = await get_vars(ctx)
 
-    if  club.tourney_id == None:
+    if club.tourney_id == None:
         await chan.send("No tournament started!")
         return
 
     tmp = ""
-    
+
     try:
         tmp = getTourney(club.tourney_id).tourney_name
     except:
         pass
 
-    await chan.send("Final standings")
+    # await chan.send("Tourney Ended!")
+    # await chan.send(formatStandings(getStandings(club.tourney_id)))
 
-    await chan.send(formatStandings(getStandings(club.tourney_id)))
-    
     # This really cant return -1 after calling get_vars?
     if updateClubTourney(club.club_id, None) == None:
         await chan.send("No club created yet!")
@@ -789,30 +813,50 @@ async def endTourney(ctx):
     await chan.send(f"Ended Toruney '{tmp}'")
 
 
-#@bot.command(aliases=['standings',"scores"])
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def nextRound(ctx):
+    """
+    Shuffle for list for tables
+    """
+    player, chan, club = await get_vars(ctx)
+
+    if club.tourney_id == None:
+        await chan.send("No tourney is currently running")
+        return
+
+    tourney = getTourney(club.tourney_id)
+    users = getUsersForTourney(club.tourney_id)
+
+    # We are starting the next round now!
+    ret = startNextRound(club.tourney_id)
+
+    await chan.send(f"Starting Round {ret}")
+
+
+# @bot.command(aliases=['standings',"scores"])
 async def rankings(ctx):
     """
     Get the standings of a current tourney!
     """
-    player, chan, club = await get_vars(ctx)    
+    player, chan, club = await get_vars(ctx)
     tourney = getTourney(club.tourney_id)
 
     if tourney == None:
         await chan.send(getError())
         return
-    
+
     await chan.send(formatStandings(getStandings(club.tourney_id)))
 
 
 def formatStandings(ordered):
-
     ret = "```"
     ret += " Score  |  Name\n"
     ret += "------------------\n"
     for score, name in ordered:
         score = str(score)
         if not "-" in score:
-            score = " "+score
+            score = " " + score
         score = score.ljust(7)
 
         # See if there is a user with this tenhou name
@@ -821,12 +865,11 @@ def formatStandings(ordered):
             ret += f"{str(score)} |  {name} ({check.user_name})\n"
         else:
             ret += f"{str(score)} |  {name}\n"
-            
-            
+
     ret += "```"
 
     return ret
-            
+
 
 """
 def getStandings(tourneyId): 
@@ -863,8 +906,9 @@ def getStandings(tourneyId):
     ordered.sort(key=lambda x:x[0], reverse=True)
 
     return ordered
-"""    
-    
+"""
+
+
 @bot.command(aliases=['p'])
 async def ping(ctx):
     """
@@ -875,17 +919,15 @@ async def ping(ctx):
     player = ctx.author
     chan = ctx.channel
 
-    #import pdb
-    #pdb.set_trace()
-    #for emoji in club.emojis:
-    #    print("Name:", emoji.name + ",", "ID:", emoji.id)
-    print("Chan id",str(chan.id))
+    print("Chan id", str(chan.id))
     await chan.send(f"pong {chan.guild.id}")
-        
+
+
 @bot.event
 async def on_ready():
     print("Time to Mahjong!")
     print("Logged in as: {}".format(bot.user.name))
+
 
 @bot.event
 async def on_error(event, *args, **kwargs):
@@ -900,5 +942,5 @@ async def on_error(event, *args, **kwargs):
     print("Exception value:", value)
     print("Exception traceback object:", traceback)
 
-    
+
 bot.run(TOKEN)

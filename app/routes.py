@@ -45,6 +45,9 @@ def addChars(owned, bonded, path):
     chars.append(tmp)
     return chars
 
+@app.route("/binghou_rules", methods=['GET', 'POST'])
+def binghou_rules():
+    return render_template('binghou_rules.html')
 
 @app.route("/emotes", methods=['GET', 'POST'])
 def emotes():
@@ -53,13 +56,16 @@ def emotes():
     user = getUser(current_user.user_id)
     owned = user.chars.split(",")
     bonded = user.bonded.split(",")
+    chan = user.table
+    if chan == None:
+        chan = "general"
 
     if (char != None and numb != None):
         if char in owned:
             if int(numb) <= 9:
-                os.popen(f"python3 emote_client.py test {char} {numb}")
+                os.popen(f"python3 emote_client.py {chan} {char} {numb}")
             elif char in bonded:
-                os.popen(f"python3 emote_client.py test {char} {numb}")
+                os.popen(f"python3 emote_client.py {chan} {char} {numb}")
             return redirect(request.path, code=302)
 
     chars = []
@@ -189,6 +195,37 @@ def club_settings(club_id):
 def clubs():
     return render_template('club_list.html', clubs=getClubs())
 
+@app.route("/tourney", methods=['GET'])
+def tourney():
+    return render_template('tourney_list.html',tourneys=getTourneys())
+
+@app.route("/tourney_standings/<path:tourneyId>", methods=['GET'])
+def tourney_standings(tourneyId):
+    try:
+        tourneyId = int(tourneyId)
+    except:
+        flash("Bad tourney ID")
+        return redirect(url_for('index'))
+
+    tourney = getTourney(tourneyId)
+    if tourney == None:
+        flash("No such tourney")
+        return redirect(url_for('index'))
+    if tourney.tenhou_rate != None and tourney.tenhou_rate.lower() == "binghou":
+        standings = getStandings(tourneyId, False, True)
+    else:
+        standings = getStandings(tourneyId, False, True)
+    gamesRaw = getGamesForTourney(tourneyId)
+    games = {}
+
+    print(gamesRaw)
+
+    for game in gamesRaw:
+        if not game.round_number in games:
+            games[game.round_number] = []
+        games[game.round_number].append(game)
+
+    return render_template('tourney_standings.html', tourney=tourney, standings=standings, games=games)
 
 @app.route("/club_standings/<path:clubId>", methods=['GET'])
 def club_standings(clubId):
@@ -203,9 +240,9 @@ def club_standings(clubId):
         flash("No such club")
         return redirect(url_for('index'))
     if club.tenhou_rate != None and club.tenhou_rate.lower() == "binghou":
-        standings = getStandings(clubId, True)
+        standings = getStandings(clubId, True, True)
     else:
-        standings = getStandings(clubId)
+        standings = getStandings(clubId, True, False)
     gamesRaw = getGamesForClub(clubId)
     games = {}
 
@@ -216,7 +253,7 @@ def club_standings(clubId):
             games[game.round_number] = []
         games[game.round_number].append(game)
 
-    return render_template('club_standings.html', club=club, standings=standings, games=games)
+    return render_template('club_standings.html', club=club, standings=standings, games=gamesRaw)
 
 
 @app.route("/binghou/<path:userName>", methods=['GET'])

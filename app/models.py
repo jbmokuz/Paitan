@@ -22,6 +22,7 @@ class User(UserMixin,db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     tenhou_name = db.Column(db.String(64))
+    table = db.Column(db.String(120))
     jade = db.Column(db.Integer, nullable=False)
     chars = db.Column(db.String(4096), nullable=False)
     bonded = db.Column(db.String(4096), nullable=False)
@@ -64,6 +65,7 @@ class Tourney(db.Model):
     tourney_id = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
     tourney_name = db.Column(db.String(128), unique=False, nullable=True)
     current_round = db.Column(db.Integer, unique=False, nullable=True)
+    tenhou_rate = db.Column(db.String(120), unique=False, nullable=True)
 
     def __repr__(self):
         return '<Tourney %r>' % self.tourney_name

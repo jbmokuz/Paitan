@@ -28,7 +28,8 @@ th, td {
 }
     </style>
 </head>
-<body>  
+  <body>
+
   <h1>Binghou Card</h1>
   <h1> {{userName}} </h1>
 <table>
@@ -63,32 +64,12 @@ th, td {
 </br>
 </br>
 
-Just get 5 Squares in a row, horizontally vertically or diagonally
-</br>
-<img src="{{url_for('static', filename='bingo.png')}}" />
+<th><a href="{{ url_for('binghou_rules',userName=name)}}">Binghou Rules!</a></th>
 
-
-<h1> Explination of squares </h1>
-Fill in a square, you must win a hand with one of the following conditions
-<ul>
-  <li> Ura3 - Get Ura3 or more! </li>
-  <li> Ikkitsuukan - 123456789</li>
-  <li> >50Fu - have more then 50fu in your winning hand</li>  
-{% if userName == "spenser"%}
-  <li>Hanemandre - get a Haneman and be named Andre </li>
-{% else %}
-  <li>Haneman - get a Haneman</li>
-{% endif %}
-  <li>Nomi Gang - Riichi or Haitei or Houtei or Rinshan with no other han (so not even uradora)</li>
-  <li>Jikaze - Your wind!</li>
-  <li>Kan! - Just make a kan! (you dont have to win the hand!)</li>
-  <li>3 Melds - make 3 melds and win the hand</li>
-  <li>Menzen - closed tsumo</li>
-  <li>3zou or Pei tanki - win on 3zou (does not have to be tanki) or Pei tanki</li>
-  <li>Other Yaku - get any other yaku not on the board</li>
-  <li>2 9pin - win a hand with at least 2 9pin </li>
-  <li>All others - Just get that yaku! (Includes Haitei, Houtei, or Rinshan) </li>
-</ul>  
-
+  {% if box == "Haneman" and userName == "spenser"%}
+    <h1> Your Special Rules! </h1>
+    <li>Hanemandre - Get a Haneman and your name has to be Andre</li>
+  {% endif %}
+ 
 </body>
 </html>

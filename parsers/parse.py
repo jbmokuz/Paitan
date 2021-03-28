@@ -79,8 +79,7 @@ def updateBinghou(bing, kans, names, game):
 
     for r in game.rounds:
         for agari in r.agari:
-            print(agari.machi)
-            print(agari)
+
             player = names[agari.player]
 
             if agari.fu > 50:
@@ -118,7 +117,7 @@ def updateBinghou(bing, kans, names, game):
 
             for yaku in agari.yakuman:
                 yaku = "🌟**" + yaku + "**🌟"
-                # print("YAKUMAN",yaku,player)
+                print("YAKUMAN",yaku,player)
                 bing[agari.player] = bing[agari.player] | (1 << 25)
 
         for pos, event in enumerate(r.events):
@@ -133,7 +132,7 @@ def updateBinghou(bing, kans, names, game):
                 # Open kan
                 if event.meld.type == "chakan":
                     player = names[event.player]
-                    bing[agari.player] = bing[agari.player] | (1 << CARD.index("Kan!"))
+                    bing[event.player] = bing[event.player] | (1 << CARD.index("Kan!"))
                     print("CHAKAN", player, r.events[pos - 1])
                     kans[event.player] += 1
                     # Kan was called 
@@ -142,7 +141,7 @@ def updateBinghou(bing, kans, names, game):
                 # Closed kan
                 if event.meld.type == "kan":
                     player = names[event.player]
-                    bing[agari.player] = bing[agari.player] | (1 << CARD.index("Kan!"))
+                    bing[event.player] = bing[event.player] | (1 << CARD.index("Kan!"))
                     print("KAN", player, r.events[pos - 1])
                     kans[event.player] += 1
 

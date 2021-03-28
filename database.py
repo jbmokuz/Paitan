@@ -39,7 +39,7 @@ def createUser(userId,userName):
     
     password = ''.join([random.choice(string.printable[:62]) for i in range(16)])
 
-    u = User(user_id=userId,user_name=userName,jade=2,chars="wanjirou,ichihime",bonded="")
+    u = User(user_id=userId,user_name=userName,jade=3,chars="wanjirou,ichihime",bonded="")
     u.set_password(password)
     db.session.add(u)
     return password
@@ -62,14 +62,14 @@ def createClub(clubId,clubName):
 
 
 # does not work with save instance decorator
-def createTourney(tourneyName):
+def createTourney(tourneyName,rate="binghou"):
     global LAST_ERROR
     
     if db.session.query(Tourney).filter(Tourney.tourney_name==tourneyName).first() != None:
         LAST_ERROR = "Already have a tourney by that name"
         return None
     
-    t = Tourney(tourney_name=tourneyName, current_round=0)
+    t = Tourney(tourney_name=tourneyName, current_round=0, tenhou_rate=rate)
     db.session.add(t)
 
     #Needed to add increment
@@ -530,6 +530,17 @@ def updateUserJade(userId, jade, char=None, bond=None):
     return 0
 
 @saveInstance
+def updateUserTable(userId, table):
+    global LAST_ERROR
+
+    user = getUser(userId)
+    if user == None:
+        LAST_ERROR = "No such user"
+        return None
+    user.table = table
+    return 0
+
+@saveInstance
 def updateUserTenhouName(userId, tenhouName):
     global LAST_ERROR
     
@@ -573,13 +584,16 @@ def startNextRound(tourneyId, roundNumber=None):
         return None
 
     tourney.current_round = tourney.current_round + 1
-    return 0
+    return tourney.current_round
 
 
 
-def getStandings(clubId,binghou=False):
-    
-    games = getGamesForClub(clubId)
+def getStandings(clubId,isClub=True,binghou=False):
+
+    if isClub:
+        games = getGamesForClub(clubId)
+    else:
+        games = getGamesForTourney(clubId)
 
     rank = {}
 

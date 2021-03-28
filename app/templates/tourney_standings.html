@@ -20,53 +20,38 @@ tr:nth-child(even) {
 }
 </style>
 
+{% if tourney.tenhou_rate != None and tourney.tenhou_rate.lower() == "binghou" %}
 
-<button type="button" class="collapsible">Standings</button>
-<div class="content">
-  
+<h1> Kantest standings </h1>
+
+{% else %}
+
+<h1> Standings </h1>
+
+{% endif %}
+
+<h2>Rate: {{tourney.tenhou_rate}}</h2>
+
   <table>
     <tr>
       <th>Name</th>
+      {% if tourney.tenhou_rate != None and tourney.tenhou_rate.lower() == "binghou" %}
+      <th>Kans</th>
+      {% else %}
       <th>Score</th>
+      {% endif %}
     </tr>
       {% for score,name in standings %}
     <tr>
-      <th>{{ name }}</th>
+      {% if tourney.tenhou_rate != None and tourney.tenhou_rate.lower() == "binghou" %}
+      <th><a href="{{ url_for('binghou',userName=name)}}">{{name}}</a></th>
+      {% else %}
+      <th>{{name}}</th>
+      {% endif %}
       <th>{{ score }}</th>
     </tr>
       {% endfor %}
   </table>
-
-</div>
-<br>
-<br>
-
-<button type="button" class="collapsible">Tables</button>
-<div class="content">
-  <table>
-    <tr>
-    <th>Finished<th>
-    <th>東</th>
-    <th>南</th>
-    <th>西</th>
-    <th>北</th>
-    <th>Replay</th>
-  </tr>        
-  {% for table in tables %}
-    <tr>
-      {% if table[4] == 1 %}
-      <th>🌟</th>
-      {% else %}
-      <th></th>
-      {% endif %}
-    <th>{{table[0]}}</th>
-    <th>{{table[1]}}</th>
-    <th>{{table[2]}}</th>
-    <th>{{table[3]}}</th>
-  </tr>
-  {% endfor %}
- </table>
-</div>
 
 <br>
 <br>

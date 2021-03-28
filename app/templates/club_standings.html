@@ -20,7 +20,6 @@ tr:nth-child(even) {
 }
 </style>
 
-
 {% if club.tenhou_rate != None and club.tenhou_rate.lower() == "binghou" %}
 
 <h1> Kantest standings </h1>
@@ -30,6 +29,8 @@ tr:nth-child(even) {
 <h1> Standings </h1>
 
 {% endif %}
+
+<h2>Rate: {{club.tenhou_rate}}</h2>
   
   <table>
     <tr>
@@ -57,11 +58,6 @@ tr:nth-child(even) {
 
 <button type="button" class="collapsible">Games</button>
 <div class="content">
-
-  {% for round in games %}
-  
-  <button type="button" class="collapsible">Round {{round}}</button>
-  <div class="content">
     <table>
     <tr>
       <th>東</th>
@@ -70,7 +66,7 @@ tr:nth-child(even) {
       <th>北</th>
       <th>Replay</th>
     </tr>        
-   {% for game in games[round] %}
+   {% for game in games[::-1] %}
     <tr>
       <th>{{game.ton_payout}} &nbsp {{game.ton}}</th>
       <th>{{game.nan_payout}} &nbsp {{game.nan}}</th>
@@ -79,14 +75,9 @@ tr:nth-child(even) {
       <th><a href="https://tenhou.net/0/?log={{game.replay_id}}">https://tenhou.net/0/?log={{game.replay_id}}</a></th>      
     </tr>
     {% endfor %}
-   </table>    
-  </div>
-
-  {% endfor %}
-  
-  </div>
-
+   </table>
 </div>
+
   <script>
     {% include "tabs.html" %}
   </script>
