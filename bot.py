@@ -8,7 +8,7 @@ import sys
 from discord.ext import commands
 
 from database import *
-from parsers.parse import getLogId, intToYaku, parseTenhou, scorePayout
+from parsers.parse import getLogId, intToYaku, parseTenhou, scorePayout, CARD
 from parsers.parse import TENSAN, TENGO, TENPIN, STANDARD, BINGHOU
 
 if len(sys.argv) > 1:
@@ -129,7 +129,7 @@ async def pull_tile(ctx):
 #################
 
 @bot.command()
-async def changePass(ctx):
+async def change_pass(ctx):
     """
     Get a new password for your account
     """
@@ -177,17 +177,43 @@ async def createSiteAccount(player, chan):
     # Add user to chan
     ret = addUserToClub(chan.guild.id, player.id)
     if ret != None:
-        await player.send(f"You are now a member of {chan.guild.name}")
+        await player.send(f"You are now a member of {chan.guild.name} \n Manage account @ https://yakuhai.com")
     else:
         await player.send(getError())
 
-    await player.send("Manage account @ https://yakuhai.com")
+@bot.command()
+async def gocha_pick(ctx, name=None):
+    """
+    Pick your free starting character!  (cost free)
+    Args:
+        name: Either wanjirou or ichihime
+    """
+    global DEFAULT
+    player, chan, club = await get_vars(ctx)
 
+    print(name)
+    if not (name in DEFAULT):
+        await chan.send("Must pick either wanjirou or ichihime")
+        return
+
+    user = getUser(player.id)
+    if user == None:
+        await chan.send(getError())
+        return
+
+    for char in DEFAULT:
+        if char in user.chars:
+            await chan.send("You already have a default char!")
+            return
+
+    os.popen(f"python3 emote_client.py gocha {name} 1").read()
+    updateUserJade(player.id, user.jade, name, None)
+    await chan.send(f"You got {name}!")
 
 @bot.command()
-async def roll(ctx, type=None):
+async def gocha_roll(ctx, type=None):
     """
-    Roll the gacha! (cost 2 jade)
+    Roll the gacha! (cost 200 jade)
     Args:
         type: Either bamboo or sakura!
     """
@@ -201,8 +227,12 @@ async def roll(ctx, type=None):
         return
 
     user = getUser(player.id)
+    if user == None:
+        await chan.send(getError())
+        return
+
     newChar = ""
-    if user.jade > 2:
+    if user.jade >= 200:
         if type == "bamboo":
             newChar = random.choice(BAMBOO)
         if type == "sakura":
@@ -215,14 +245,14 @@ async def roll(ctx, type=None):
     if newChar in user.chars:
         await chan.send(f"You got {newChar}! I hope that was not a duplicate... RIP")
     else:
-        updateUserJade(player.id, user.jade - 2, newChar, None)
         await chan.send(f"You got {newChar}!")
+    updateUserJade(player.id, user.jade - 200, newChar, None)
 
 
 @bot.command()
-async def bond(ctx, name=None):
+async def gocha_bond(ctx, name=None):
     """
-    Get all the outfits for a char! (cost 1 jade)
+    Get all the outfits for a char! (cost 300 jade)
     Args:
         name: Name (WARNING: mahjong soul+ don't have a bond (Washizu does though)!)
     """
@@ -237,8 +267,8 @@ async def bond(ctx, name=None):
         return
 
     user = getUser(player.id)
-    if user.jade > 1:
-        updateUserJade(player.id, user.jade - 1, None, name)
+    if user.jade >= 300:
+        updateUserJade(player.id, user.jade - 300, None, name)
     else:
         await chan.send(f"You only have {user.jade} jade!")
         return
@@ -248,7 +278,7 @@ async def bond(ctx, name=None):
         await chan.send(f"You got the new outfits and stuff for {name}!")
 
 @bot.command()
-async def setTable(ctx, table="general"):
+async def set_table(ctx, table="general"):
     """
     Set the table you are emoting at!
     Args:
@@ -524,7 +554,7 @@ async def setTenhouName(ctx, tenhouName):
 
 
 @bot.command()
-async def myInfo(ctx):
+async def my_info(ctx):
     """
     get info about you!
     """
@@ -628,12 +658,10 @@ async def score(ctx, log=None, rate=None, shugi=None):
         tableRate = copy.deepcopy(STANDARD)
     elif rate == "binghou":
         tableRate = copy.deepcopy(BINGHOU)
-    elif rate != None:
+    else:
         await ctx.message.add_reaction(EMOJI_ERROR)
         await chan.send(f"{rate} is not a valid rate (try $help score)")
         return
-    else:
-        tableRate = copy.deepcopy(STANDARD)
 
     if (shugi != None):
         try:
@@ -645,6 +673,7 @@ async def score(ctx, log=None, rate=None, shugi=None):
 
     # This gets the players and stuff
     players = parseTenhou(log)
+
     if players == None:
         await ctx.message.add_reaction(EMOJI_ERROR)
         await chan.send(getError())
@@ -662,11 +691,23 @@ async def score(ctx, log=None, rate=None, shugi=None):
     for i, p in enumerate(players):
         scoresOrdered.append([x for x in scores if x.name == seatOrder[i]][0])
 
+    # Get scores to print
+    scoreRet = ""
+    if rate == "binghou":
+        for row in scores:
+            scoreRet += row.name + ": Kans " + str(row.kans) + " Yaku: " + ", ".join(intToYaku(row.binghou))
+            scoreRet += "\n"
+    else:
+        scoreRet += formatScores(scores, tableRate)
+
     # Add scores to db
     if club.tourney_id != None:
         tourney = getTourney(club.tourney_id)
         game = createTenhouGame(logId, scoresOrdered, tableRate.name, tourney.current_round)
     else:
+        for p in scoresOrdered:
+            p.binghou = p.binghou & (1 << CARD.index("Kan!"))
+            p.kans = 0
         game = createTenhouGame(logId, scoresOrdered, tableRate.name)
 
     if game == None:
@@ -674,6 +715,14 @@ async def score(ctx, log=None, rate=None, shugi=None):
         await ctx.message.add_reaction(EMOJI_WARNING)
         await chan.send("WARNING: Already scored that game! Will not be added\nHere are results anyways")
     else:
+
+        # Add jade for kans
+        if rate == "binghou":
+            for row in scores:
+                test = getUserFromTenhouName(row.name)
+                if test and row.kans > 0:
+                    updateUserJade(test.user_id, test.jade + row.kans * 100)
+
         ret = addGameToClub(club.club_id, game.tenhou_game_id)
         if club.tourney_id != None:
             addGameToTourney(club.tourney_id, game.tenhou_game_id)
@@ -685,19 +734,9 @@ async def score(ctx, log=None, rate=None, shugi=None):
     # print(explain)
     # if
     # await chan.send(formatScores(scores, tableRate))
-    ret = ""
-    if rate == "binghou":
-        for row in scores:
-            test = getUserFromTenhouName(row.name)
-            if test and row.kans > 0:
-                updateUserJade(test.user_id, test.jade + row.kans)
-            ret += row.name + ": Kans " + str(row.kans) + " Yaku: " + ", ".join(intToYaku(row.binghou))
-            ret += "\n"
-    else:
-        ret += formatScores(scores, tableRate)
 
     await ctx.message.add_reaction(EMOJI_OK)
-    await chan.send(ret)
+    await chan.send(scoreRet)
 
     """
     for guild in bot.guilds:
@@ -754,7 +793,7 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, table="general", random
 
 @bot.command()
 @commands.has_permissions(administrator=True)
-async def startTourney(ctx, *args):
+async def start_tourney(ctx, *args):
     """
     Start a Tourney on the server!
     Args:
@@ -785,7 +824,7 @@ async def startTourney(ctx, *args):
 
 @bot.command()
 @commands.has_permissions(administrator=True)
-async def endTourney(ctx):
+async def end_tourney(ctx):
     """
     End a Tourney on the server!
     """
@@ -815,9 +854,9 @@ async def endTourney(ctx):
 
 @bot.command()
 @commands.has_permissions(administrator=True)
-async def nextRound(ctx):
+async def next_round(ctx):
     """
-    Shuffle for list for tables
+    Go to next round for tourney
     """
     player, chan, club = await get_vars(ctx)
 
@@ -920,7 +959,7 @@ async def ping(ctx):
     chan = ctx.channel
 
     print("Chan id", str(chan.id))
-    await chan.send(f"pong {chan.guild.id}")
+    await chan.send(f"pong")
 
 
 @bot.event

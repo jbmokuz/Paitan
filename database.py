@@ -39,7 +39,7 @@ def createUser(userId,userName):
     
     password = ''.join([random.choice(string.printable[:62]) for i in range(16)])
 
-    u = User(user_id=userId,user_name=userName,jade=3,chars="wanjirou,ichihime",bonded="")
+    u = User(user_id=userId,user_name=userName,jade=300,chars="",bonded="")
     u.set_password(password)
     db.session.add(u)
     return password
@@ -548,7 +548,7 @@ def updateUserTenhouName(userId, tenhouName):
     if user == None:
         LAST_ERROR = "You are not registered! Please create an account ($createAccount)"
         return None
-    user.tenhou_name = tenhouName
+    user.tenhou_name = tenhouName.strip()
     return 0
 
 ## Other ##

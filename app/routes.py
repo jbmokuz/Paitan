@@ -45,9 +45,9 @@ def addChars(owned, bonded, path):
     chars.append(tmp)
     return chars
 
-@app.route("/binghou_rules", methods=['GET', 'POST'])
-def binghou_rules():
-    return render_template('binghou_rules.html')
+#@app.route("/binghou_rules", methods=['GET', 'POST'])
+#def binghou_rules():
+#    return render_template('binghou_rules.html')
 
 @app.route("/emotes", methods=['GET', 'POST'])
 def emotes():
@@ -113,7 +113,7 @@ def settings():
             print("tenhou name")
             current_user.tenhou_name = tenhou_name_form.tenhouName.data
             db.session.commit()
-            return redirect(url_for('index'))
+            return redirect(request.path, code=302)
 
         if pass_form.validate_on_submit():
             print("password")
