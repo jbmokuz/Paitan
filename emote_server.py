@@ -7,12 +7,13 @@ import glob
 import socket
 
 HOST = '127.0.0.1'
-PORT = 7501
+PORT = 7500
 
-TOKEN = os.environ["DISCORD_DEV_TOKEN"]  
+TOKEN = os.environ["CHIITAN_TOKEN"]  
 bot = commands.Bot("&")
 
-guild_name = "bot_testing"
+#guild_name = "bot_testing"
+guild_name = "Mystery Mahjong Match"
 #emote_chan_name = sys.argv[1]
 
 
@@ -30,6 +31,7 @@ sakura = set([n.split("/")[-1].split("-")[0] for n in glob.glob(f"{FILE_PATH}/sa
 
 @bot.event
 async def on_ready():
+    print("Ready!")
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((HOST, PORT))
         s.listen()
@@ -39,10 +41,11 @@ async def on_ready():
                 while True:
                     data = conn.recv(1024)
                     print(data)
-                    if len(data.decode("utf-8").split(",")) == 3:
-                        emote_chan_name, char, numb = data.decode("utf-8").split(",")
+                    if len(data.decode("utf-8").split(",")) == 4:
+                        emote_chan_name, char, numb, name = data.decode("utf-8").split(",")
                         print(char)
                         for guild in bot.guilds:
+                            print(guild.name)
                             if guild.name == guild_name:
                                 for chan in guild.text_channels:
                                     if str(chan) == emote_chan_name:
@@ -60,7 +63,9 @@ async def on_ready():
                                                     continue
                                                 embed = discord.Embed()
                                                 embed.set_thumbnail(url="attachment://image.png")
+                                                await chan.send(name)
                                                 await chan.send(file=file, embed=embed)
+                                                
                                         #except:
                                         #    print("NOOOOO")
                                         #    sys.exit(0)

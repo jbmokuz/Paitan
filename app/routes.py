@@ -63,9 +63,9 @@ def emotes():
     if (char != None and numb != None):
         if char in owned:
             if int(numb) <= 9:
-                os.popen(f"python3 emote_client.py {chan} {char} {numb}")
+                os.popen(f"python3 emote_client.py {chan} {char} {numb} {user.user_name}")
             elif char in bonded:
-                os.popen(f"python3 emote_client.py {chan} {char} {numb}")
+                os.popen(f"python3 emote_client.py {chan} {char} {numb} {user.user_name}")
             return redirect(request.path, code=302)
 
     chars = []

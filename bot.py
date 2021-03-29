@@ -206,7 +206,7 @@ async def gocha_pick(ctx, name=None):
             await chan.send("You already have a default char!")
             return
 
-    os.popen(f"python3 emote_client.py gocha {name} 1").read()
+    os.popen(f"python3 emote_client.py gocha {name} 1 BOT").read()
     updateUserJade(player.id, user.jade, name, None)
     await chan.send(f"You got {name}!")
 
@@ -241,7 +241,11 @@ async def gocha_roll(ctx, type=None):
         await chan.send(f"You only have {user.jade} jade!")
         return
     await chan.send("Rolling...")
-    os.popen(f"python3 emote_client.py gocha {newChar} 1").read()
+    if random.randint(0,1) == 0 and len(user.chars.split(",")) > 2:
+        await chan.send(f"Outch, you got a green item... RIP")
+        updateUserJade(player.id, user.jade - 200, None, None)
+        return
+    os.popen(f"python3 emote_client.py gocha {newChar} 1 BOT").read()
     if newChar in user.chars:
         await chan.send(f"You got {newChar}! I hope that was not a duplicate... RIP")
     else:
