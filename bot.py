@@ -596,12 +596,15 @@ async def info(ctx):
 
 
 def formatScores(players, tableRate):
-    table = [["Score", "", "Pay", "Name"]]
+    #table = [["Score", "", "Pay", "Name"]]
+    table = [["Score", "Kan", "Jade", "Name"]]    
 
     for row in players:
         score = str(row.score)
-        shugi = str(row.shugi)
-        payout = str(row.payout)
+        #shugi = str(row.shugi)
+        shugi = str(row.kans)
+        #payout = str(row.payout)
+        payout = str(row.score//100 - 350 + row.kans*100)
         if not "-" in shugi:
             shugi = "+" + shugi
         if not "-" in payout:
@@ -697,12 +700,15 @@ async def score(ctx, log=None, rate=None, shugi=None):
 
     # Get scores to print
     scoreRet = ""
+    """
     if rate == "binghou":
         for row in scores:
-            scoreRet += row.name + ": Kans " + str(row.kans) + " Yaku: " + ", ".join(intToYaku(row.binghou))
+            #scoreRet += row.name + ": Kans " + str(row.kans) + " Yaku: " + ", ".join(intToYaku(row.binghou))
+            scoreRet += row.name + " Jade: " +str(row.score//100 - 350 + row.kans*100)+ ": Kans " + str(row.kans) + " Score: " + str(row.score)
             scoreRet += "\n"
     else:
-        scoreRet += formatScores(scores, tableRate)
+    """
+    scoreRet += formatScores(scores, tableRate)
 
     # Add scores to db
     if club.tourney_id != None:
@@ -711,7 +717,6 @@ async def score(ctx, log=None, rate=None, shugi=None):
     else:
         for p in scoresOrdered:
             p.binghou = p.binghou & (1 << CARD.index("Kan!"))
-            p.kans = 0
         game = createTenhouGame(logId, scoresOrdered, tableRate.name)
 
     if game == None:
@@ -724,8 +729,10 @@ async def score(ctx, log=None, rate=None, shugi=None):
         if rate == "binghou":
             for row in scores:
                 test = getUserFromTenhouName(row.name)
-                if test and row.kans > 0:
-                    updateUserJade(test.user_id, test.jade + row.kans * 100)
+                if test:
+                    updateJade = row.score//100 - 300 + row.kans*10
+                    if updateJade > 0:
+                        updateUserJade(test.user_id, test.jade + updateJade)
 
         ret = addGameToClub(club.club_id, game.tenhou_game_id)
         if club.tourney_id != None:
