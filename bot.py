@@ -241,10 +241,10 @@ async def gocha_roll(ctx, type=None):
         await chan.send(f"You only have {user.jade} jade!")
         return
     await chan.send("Rolling...")
-    if random.randint(0,1) == 0 and len(user.chars.split(",")) > 2:
-        await chan.send(f"Outch, you got a green item... RIP")
-        updateUserJade(player.id, user.jade - 200, None, None)
-        return
+    #if random.randint(0,2) == 0 and len(user.chars.split(",")) > 2:
+    #    await chan.send(f"Outch, you got a green item... RIP")
+    #    updateUserJade(player.id, user.jade - 200, None, None)
+    #    return
     os.popen(f"python3 emote_client.py gocha {newChar} 1 BOT").read()
     if newChar in user.chars:
         await chan.send(f"You got {newChar}! I hope that was not a duplicate... RIP")
@@ -604,7 +604,9 @@ def formatScores(players, tableRate):
         #shugi = str(row.shugi)
         shugi = str(row.kans)
         #payout = str(row.payout)
-        payout = str(row.score//100 - 350 + row.kans*100)
+        payout = str(row.score//100 - 300)
+        if int(payout) < 0:
+            payout = str(0)
         if not "-" in shugi:
             shugi = "+" + shugi
         if not "-" in payout:
@@ -730,7 +732,7 @@ async def score(ctx, log=None, rate=None, shugi=None):
             for row in scores:
                 test = getUserFromTenhouName(row.name)
                 if test:
-                    updateJade = row.score//100 - 300 + row.kans*10
+                    updateJade = row.score//100 - 300
                     if updateJade > 0:
                         updateUserJade(test.user_id, test.jade + updateJade)
 
