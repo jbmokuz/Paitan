@@ -45,9 +45,9 @@ def addChars(owned, bonded, path):
     chars.append(tmp)
     return chars
 
-#@app.route("/binghou_rules", methods=['GET', 'POST'])
-#def binghou_rules():
-#    return render_template('binghou_rules.html')
+@app.route("/binghou_rules", methods=['GET', 'POST'])
+def binghou_rules():
+    return render_template('binghou_rules.html')
 
 @app.route("/emotes", methods=['GET', 'POST'])
 def emotes():

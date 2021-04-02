@@ -296,7 +296,7 @@ async def set_table(ctx, table="general"):
     await chan.send(f"Updated to table {table}")
 
 
-# @bot.command()
+@bot.command()
 async def join(ctx):
     """
     Join current tourney
@@ -310,7 +310,7 @@ async def join(ctx):
 
     await chan.send("Added!")
 
-# @bot.command()
+@bot.command()
 async def leave(ctx):
     """
     Join current tourney
@@ -322,7 +322,7 @@ async def leave(ctx):
         return
     await chan.send("Removed")
 
-# @bot.command()
+@bot.command()
 async def kick(ctx, userName):
     """
     kick a player from a tourney
@@ -339,7 +339,7 @@ async def kick(ctx, userName):
         return
     await chan.send("Removed")
 
-# @bot.command()
+@bot.command()
 async def list(ctx):
     """
     Join current tourney
@@ -371,8 +371,8 @@ async def list(ctx):
     await chan.send(ret)
 
 
-# @bot.command()
-# @commands.has_permissions(administrator=True)
+@bot.command()
+@commands.has_permissions(administrator=True)
 async def shuffle(ctx):
     """
     Shuffle for list for tables
@@ -542,8 +542,8 @@ def printTables(tourney):
     return ret
 
 
-# @bot.command()
-async def setTenhouName(ctx, tenhouName):
+@bot.command()
+async def set_name(ctx, tenhouName):
     """
     Set your tenhou name!
     """
@@ -597,20 +597,23 @@ async def info(ctx):
 
 def formatScores(players, tableRate):
     #table = [["Score", "", "Pay", "Name"]]
-    table = [["Score", "Kan", "Jade", "Name"]]    
+    table = [["Score", "Kan", "Yaku", "Name"]]    
 
     for row in players:
         score = str(row.score)
         #shugi = str(row.shugi)
         shugi = str(row.kans)
         #payout = str(row.payout)
-        payout = str(row.score//100 - 300)
+        payout = ", ".join(intToYaku(row.binghou))
+        #payout = str(row.score//100 - 300)
+        """
         if int(payout) < 0:
             payout = str(0)
         if not "-" in shugi:
             shugi = "+" + shugi
         if not "-" in payout:
             payout = "+" + payout
+        """
         table.append([str(score), str(shugi), str(payout), str(row.name)])
 
     colMax = [max([len(i) for i in c]) for c in zip(*table)]
@@ -700,18 +703,6 @@ async def score(ctx, log=None, rate=None, shugi=None):
     for i, p in enumerate(players):
         scoresOrdered.append([x for x in scores if x.name == seatOrder[i]][0])
 
-    # Get scores to print
-    scoreRet = ""
-    """
-    if rate == "binghou":
-        for row in scores:
-            #scoreRet += row.name + ": Kans " + str(row.kans) + " Yaku: " + ", ".join(intToYaku(row.binghou))
-            scoreRet += row.name + " Jade: " +str(row.score//100 - 350 + row.kans*100)+ ": Kans " + str(row.kans) + " Score: " + str(row.score)
-            scoreRet += "\n"
-    else:
-    """
-    scoreRet += formatScores(scores, tableRate)
-
     # Add scores to db
     if club.tourney_id != None:
         tourney = getTourney(club.tourney_id)
@@ -720,23 +711,13 @@ async def score(ctx, log=None, rate=None, shugi=None):
         for p in scoresOrdered:
             p.binghou = p.binghou & (1 << CARD.index("Kan!"))
         game = createTenhouGame(logId, scoresOrdered, tableRate.name)
-
+        
     if game == None:
         # await chan.send(getError())
         await ctx.message.add_reaction(EMOJI_WARNING)
         await chan.send("WARNING: Already scored that game! Will not be added\nHere are results anyways")
-    else:
-
-        # Add jade for kans
-        if rate == "binghou":
-            for row in scores:
-                test = getUserFromTenhouName(row.name)
-                if test:
-                    updateJade = row.score//100 - 300
-                    if updateJade > 0:
-                        updateUserJade(test.user_id, test.jade + updateJade)
-
-        ret = addGameToClub(club.club_id, game.tenhou_game_id)
+    else:                        
+        ret = addGameToClub(club.club_id, game.tenhou_game_id)        
         if club.tourney_id != None:
             addGameToTourney(club.tourney_id, game.tenhou_game_id)
         if ret == None:
@@ -744,6 +725,23 @@ async def score(ctx, log=None, rate=None, shugi=None):
             await chan.send(getError())
             return
 
+    scoreRet = ""
+        
+    # Add jade for kans
+    if rate == "binghou":
+        for row in scores:
+            test = getUserFromTenhouName(row.name)
+            if test:
+                updateJade = row.score//100 - 300
+                if updateJade > 0:
+                    updateUserJade(test.user_id, test.jade + updateJade)
+            #scoreRet += row.name + " Jade: " +str(row.score//100 - 350 + row.kans*100)+ ": Kans " + str(row.kans) + " Yaku: " + ", ".join(intToYaku(row.binghou))
+            #scoreRet += formatScores(scores, tableRate)
+            #scoreRet += "\n"                                    
+    #else:
+    scoreRet += formatScores(scores, tableRate)
+
+        
     # print(explain)
     # if
     # await chan.send(formatScores(scores, tableRate))
@@ -762,7 +760,7 @@ async def score(ctx, log=None, rate=None, shugi=None):
 
 
 @bot.command()
-async def start(ctx, p1=None, p2=None, p3=None, p4=None, table="general", randomSeat="true"):
+async def start(ctx, p1=None, p2=None, p3=None, p4=None, tableName="general", randomSeat="true"):
     """
     Start Tenhou Game
     Args:
@@ -771,17 +769,52 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, table="general", random
 
     player, chan, club = await get_vars(ctx)
 
+    player_names = []
+    
     if (p1 == None or p2 == None or p3 == None or p4 == None):
+        if club.tourney_id != None:
+            
+            user = getUser(player.id)
+            tourney = getTourney(club.tourney_id)
+            tables = getTablesForRoundTourney(tourney.tourney_id, tourney.current_round)
+            
+            count = 0
+            # If we have started... lets get the players table!
+            if tourney.current_round != 0:
+                for table in tables:
+                    count += 1
+                    currentTable = [table.ton, table.nan, table.xia, table.pei]
+                    if user.user_id in currentTable:
+                        tableName = f"table{count}"
+                        for uid in currentTable:
+                            u = getUser(uid)
+                            print(u)
+                            if u == None:
+                                await chan.send(f"ERROR: Could not find user {uid}\nI think you have a bye")
+                                #await chan.send(getError())
+                                return
+                            if u.tenhou_name == None:
+                                await chan.send(f"No tenhou name for user {u.user_name}")
+                            else:
+                                print("COW")
+                                player_names.append(u.tenhou_name)
+    else:
+        player_names = [p1, p2, p3, p4]
+
+    print(player_names)
+    print(tableName)
+    
+    if len(player_names) < 4:
         await chan.send(f"Please specify 4 players space separated")
         return
 
-    player_names = [p1, p2, p3, p4]
 
     users = [getUserFromTenhouName(u) for u in player_names]
     for u in users:
         if u:
-            updateUserTable(u.user_id, table)
+            updateUserTable(u.user_id, tableName)
 
+    
     print(f"Starting, Admin:{club.tenhou_room} Rules:{club.tenhou_rules}")
 
     data = {
@@ -797,7 +830,9 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, table="general", random
 
     data["M"] = "\r\n".join(player_names)
 
+    print("sending")
     resp = requests.post('https://tenhou.net/cs/edit/cmd_start.cgi', data=data)
+    print(resp)
     if resp.status_code != 200:
         await chan.send(f"http error {resp.status_code} :<")
         return

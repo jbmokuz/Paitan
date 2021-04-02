@@ -44,8 +44,7 @@ th, td {
 	{% for i in range(5) %}
 	    <tr>	
  	      {% for j in range(5) %}
-	          {% set boxz = card[i*5+j] %}
-	      	  {% set box = "----" %}
+	          {% set box = card[i*5+j] %}
 
                   {% if box == "Haneman" and userName == "ANDRENAME"%}
 	              {% set box = "Hanemandre" %}
@@ -65,9 +64,7 @@ th, td {
 </br>
 </br>
 
-  {% if 1==2 %}
 <th><a href="{{ url_for('binghou_rules',userName=name)}}">Binghou Rules!</a></th>
-  {% endif %}
 
   {% if box == "Haneman" and userName == "ANDRENAME"%}
     <h1> Your Special Rules! </h1>
