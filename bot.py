@@ -6,6 +6,7 @@ import urllib
 import requests
 import sys
 from discord.ext import commands
+import discord
 
 from database import *
 from parsers.parse import getLogId, intToYaku, parseTenhou, scorePayout, CARD
@@ -83,16 +84,16 @@ def show_roulette():
     return ret
 
 
-# @bot.command()
-# async def roll(ctx, dice=2):
-#    """
-#    roll dice
-#    """
-#    player, chan, club = await get_vars(ctx)
-#    rolls = []
-#    for i in range(dice):
-#        rolls.append(random.randint(1,6))
-#    await chan.send(f"{rolls}\n{sum(rolls)}")
+@bot.command()
+async def roll(ctx, dice=2):
+    """
+    roll dice
+    """
+    player, chan, club = await get_vars(ctx)
+    rolls = []
+    for i in range(dice):
+        rolls.append(random.randint(1,6))
+    await chan.send(f"{rolls}\n{sum(rolls)}")
 
 
 @bot.command()
@@ -100,13 +101,12 @@ def show_roulette():
 async def load_and_spin(ctx):
     global ROULETTE
     player, chan, club = await get_vars(ctx)
-    ROULETTE = [0, 0, 0, 0, 0, 1]
+    ROULETTE = [0, 0, 0, 0, 1]
     random.shuffle(ROULETTE)
     await chan.send(show_roulette())
 
 
 @bot.command()
-@commands.has_permissions(administrator=True)
 async def pull_tile(ctx):
     global ROULETTE
     player, chan, club = await get_vars(ctx)
@@ -304,11 +304,14 @@ async def join(ctx):
     player, chan, club = await get_vars(ctx)
     ret = addUserToTourney(club.tourney_id, player.id)
 
+    if str(player.id) == "225048943350775808":
+        await chan.send("A Desperate Woman has joined...")
+    
     if ret == None:
         await chan.send(getError())
         return
 
-    await chan.send("Added!")
+    await chan.send("Added! That makes "+str(len(getUsersForTourney(club.tourney_id))))
 
 @bot.command()
 async def leave(ctx):
@@ -317,10 +320,14 @@ async def leave(ctx):
     """
     player, chan, club = await get_vars(ctx)
     ret = removeUserFromTourney(club.tourney_id, player.id)
+    
+    if str(player.id) == "225048943350775808":
+        await chan.send("It is safe to play mahjong again!")
+    
     if ret == None:
         await chan.send(getError())
         return
-    await chan.send("Removed")
+    await chan.send("Removed! That makes "+str(len(getUsersForTourney(club.tourney_id))))
 
 @bot.command()
 async def kick(ctx, userName):
@@ -328,17 +335,20 @@ async def kick(ctx, userName):
     kick a player from a tourney
     """
     player, chan, club = await get_vars(ctx)
-
+        
     user = getUserFromUserName(userName)
     if user == None:
-        await chan.send("Could not find user by that name")
+        await chan.send("Chii-tan is confused... :<")
+        return
 
-    ret = removeUserFromTourney(club.tourney_id, player.id)
+    ret = removeUserFromTourney(club.tourney_id, user.user_id)
     if ret == None:
         await chan.send(getError())
         return
-    await chan.send("Removed")
+    await chan.send("Removed "+userName)
 
+
+    
 @bot.command()
 async def list(ctx):
     """
@@ -349,11 +359,23 @@ async def list(ctx):
         await chan.send("No tourney is currently running")
         return
 
+    ret = requests.post("https://tenhou.net/cs/edit/cmd_get_players.cgi",data = {"L":club.tenhou_room})
+
+    if ret.status_code != 200:
+        await chan.send("Could not get list :<")
+
+    ret = ret.text
+    idle = urllib.parse.unquote(ret.split("&")[0][5:]).split(",")
+    play = urllib.parse.unquote(ret.split("&")[1][5:]).split(",")
+        
+    print(idle, play)
+    
+
     tourney = getTourney(club.tourney_id)
 
-    ret = "```"
+    ret = "```In Queue:\n\n"
     # Havent shuffled for tables yet
-    if tourney.current_round == 0:
+    if 1==1: #tourney.current_round == 0:
         users = getUsersForTourney(club.tourney_id)
         if users == []:
             await chan.send("No users have joined")
@@ -365,14 +387,19 @@ async def list(ctx):
             ret += "\n"
 
     else:
-        ret += printTables(tourney)
+        pass
+    
+    #if tourney.current_round != 0:
+    #    ret += "```\n\n```TABLES:"
+    #    ret += printTables(tourney)
 
     ret += "```"
     await chan.send(ret)
 
 
+
+#@commands.has_permissions(administrator=True)
 @bot.command()
-@commands.has_permissions(administrator=True)
 async def shuffle(ctx):
     """
     Shuffle for list for tables
@@ -391,8 +418,10 @@ async def shuffle(ctx):
 
     ret = "```"
 
+    tables = getTablesForRoundTourney(tourney.tourney_id, tourney.current_round - 1)
+    
     # First round is just random
-    if tourney.current_round == 1:
+    if 1==1: #tourney.current_round == 1 or tables == [] or len(users) < len(tables):
 
         random.shuffle(users)
         tables = [[u.user_id for u in users[i:i + 4]] for i in range(0, len(users), 4)]
@@ -402,10 +431,11 @@ async def shuffle(ctx):
     # Need at least 16 people, but should still get you the least overlap?
     else:
 
-        tables = getTablesForRoundTourney(tourney.tourney_id, tourney.current_round - 1)
-
         byes = []
 
+        print(tables)
+        userIds = [u.user_id for u in users]
+        
         # This is a bye table as there is not 4 players
         # @NOTE always assuming 4 player mahjong for now
         if tables[-1].pei == None:
@@ -413,8 +443,30 @@ async def shuffle(ctx):
             byes = [byes.ton, byes.nan, byes.xia, byes.pei]
             tables = tables[:-1]
 
-        tables = [[i.ton, i.nan, i.xia, i.pei] for i in tables]
+        # remove people not in the list
+        for userId in byes:
+            if not userId in userIds:
+                byes.remove(userId)
 
+        tables = [[i.ton, i.nan, i.xia, i.pei] for i in tables]
+        flatTables = [a for l in tables for a in l]
+        random.shuffle(flatTables)
+
+        """
+        def replaceLeavers(newUserId):
+            for table in tables:
+                for uid in tables:
+                    if not uid in userIds:
+                        table[table.get(uid)] = newUserId
+                        return True
+            return False
+
+        [a,b,c,d][e,f,g,h][i]
+
+        [a,c,d,e,f,g,h]
+        [i,j,k,l,m,n]
+        """
+        
         # Shuffle the order of all the tables 
         random.shuffle(tables)
 
@@ -554,7 +606,7 @@ async def set_name(ctx, tenhouName):
         await chan.send(getError())
         return
 
-    await chan.send("Updated tenhou name!")
+    await chan.send(f"Updated tenhou name to {tenhouName}!")
 
 
 @bot.command()
@@ -597,24 +649,24 @@ async def info(ctx):
 
 def formatScores(players, tableRate):
     #table = [["Score", "", "Pay", "Name"]]
-    table = [["Score", "Kan", "Yaku", "Name"]]    
+    table = [["Score", "   ", "Pay", "Name"]]    
 
     for row in players:
         score = str(row.score)
-        #shugi = str(row.shugi)
-        shugi = str(row.kans)
-        #payout = str(row.payout)
-        payout = ", ".join(intToYaku(row.binghou))
+        shugi = str(row.shugi)
+        #shugi = str(row.kans)
+        payout = str(row.payout)
+        #payout = ", ".join(intToYaku(row.binghou))
         #payout = str(row.score//100 - 300)
-        """
-        if int(payout) < 0:
-            payout = str(0)
+        
+        #if int(payout) < 0:
+        #    payout = str(0)
         if not "-" in shugi:
             shugi = "+" + shugi
         if not "-" in payout:
             payout = "+" + payout
-        """
-        table.append([str(score), str(shugi), str(payout), str(row.name)])
+
+        table.append([str(score), str(shugi), '{0:.2f}'.format(float(payout)), str(row.name)])
 
     colMax = [max([len(i) for i in c]) for c in zip(*table)]
     colMax[-1] = 0
@@ -817,6 +869,32 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, tableName="general", ra
     
     print(f"Starting, Admin:{club.tenhou_room} Rules:{club.tenhou_rules}")
 
+    rules = []
+
+    rulez = int(club.tenhou_rules,16)
+    
+    if rulez % 2:
+        rules.append("Aka Ari")
+    else:
+        rules.append("Aka Nashi")
+
+    if rulez % 4:
+        rules.append("Kuitan Ari")
+    else:
+        rule.append("Kuitan Nashi")
+
+    if rulez % 8:
+        rules.append("Hanchan")
+    else:
+        rules.append("Tonpu")
+
+    if rulez & 0x200 or rulez & 0x400:
+        rules.append("Shugi Ari")
+    else:
+        rules.append("Shugi Nashi")
+            
+    await chan.send("```Starting: " + " | ".join(rules)+"```")
+        
     data = {
         "L": club.tenhou_room,
         "R2": club.tenhou_rules,
@@ -836,11 +914,14 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, tableName="general", ra
     if resp.status_code != 200:
         await chan.send(f"http error {resp.status_code} :<")
         return
+
     await chan.send(urllib.parse.unquote(resp.text))
 
 
+
+
+#@commands.has_permissions(administrator=True)
 @bot.command()
-@commands.has_permissions(administrator=True)
 async def start_tourney(ctx, *args):
     """
     Start a Tourney on the server!
@@ -858,7 +939,11 @@ async def start_tourney(ctx, *args):
         return
 
     tourney = createTourney(" ".join(args), club.tenhou_rate)
+    if tourney == None:
+        await chan.send(getError())
+        return
 
+    
     if updateClubTourney(club.club_id, tourney.tourney_id) == None:
         await chan.send(getError())
         return
@@ -870,8 +955,9 @@ async def start_tourney(ctx, *args):
     await chan.send(f"Started Tourney '{getTourney(club.tourney_id).tourney_name}'")
 
 
+
+#@commands.has_permissions(administrator=True)
 @bot.command()
-@commands.has_permissions(administrator=True)
 async def end_tourney(ctx):
     """
     End a Tourney on the server!
@@ -921,27 +1007,28 @@ async def next_round(ctx):
     await chan.send(f"Starting Round {ret}")
 
 
-# @bot.command(aliases=['standings',"scores"])
+@bot.command(aliases=['standings',"scores"])
 async def rankings(ctx):
     """
     Get the standings of a current tourney!
     """
     player, chan, club = await get_vars(ctx)
     tourney = getTourney(club.tourney_id)
-
+    
     if tourney == None:
         await chan.send(getError())
         return
 
-    await chan.send(formatStandings(getStandings(club.tourney_id)))
+    await chan.send(formatStandings(getStandings(club.tourney_id,False)))
 
 
 def formatStandings(ordered):
+
     ret = "```"
     ret += " Score  |  Name\n"
     ret += "------------------\n"
     for score, name in ordered:
-        score = str(score)
+        score = str(round(score,2))
         if not "-" in score:
             score = " " + score
         score = score.ljust(7)
@@ -1010,6 +1097,85 @@ async def ping(ctx):
     await chan.send(f"pong")
 
 
+@bot.command()
+async def role(ctx, newRole=None):
+    """
+    Add or remove a role (will remove if you already have the role)!
+    Args:
+        role: the role you want to be added to or removed from
+    """
+    
+    player, chan, gi =  await get_vars(ctx)
+    validRoles = ["san","pin","go"]
+
+    newRole = newRole.lower()
+
+    if newRole == None or not newRole in validRoles:
+        await chan.send("Usage: role <role>\nTry san, pin, or go")
+        return 
+
+    newRole = newRole[0].upper() + newRole[1:]
+    
+    roles = await chan.guild.fetch_roles()
+    if not newRole in [i.name for i in roles]:
+        await chan.guild.create_role(name=newRole)
+
+    removed = False
+    for r in player.roles:
+        if r.guild == chan.guild:
+            if r.name == newRole:
+                role = discord.utils.get(chan.guild.roles, name=newRole)
+                await player.remove_roles(role)
+                await chan.send(f"Removed from {newRole}")
+                removed = True
+
+    if (removed):
+        return
+                
+    role = discord.utils.get(chan.guild.roles, name=newRole)
+    await player.add_roles(role)
+    await chan.send(f"Added to {newRole}")
+
+    
+"""
+@bot.command()
+async def role(ctx, role):
+
+    
+    player, chan, gi =  await get_vars(ctx)
+    roles = await chan.guild.fetch_roles()
+
+    ROLES = ["san","go","pin"]
+
+    role = role.lower()
+    
+    if not role in ROLES:
+        await chan.send(f"{role} is not a role!\nValid roles {ROLES}")
+        return 
+
+    role = role[0].upper() + role[1:]
+                        
+    if not role in [i.name for i in roles]:
+        await chan.guild.create_role(name=role)
+
+    role = discord.utils.get(chan.guild.roles, name=role)
+    await player.add_roles(role)
+    await chan.send("Added")
+"""
+
+"""
+@bot.command()
+async def role(ctx):
+    player, chan, gi =  await get_vars(ctx)
+    roles = await chan.guild.fetch_roles()
+    if not "Ping for Games" in [i.name for i in roles]:
+        await chan.guild.create_role(name="Ping for Games")
+
+    role = discord.utils.get(chan.guild.roles, name="Ping for Games")
+    await player.add_roles(role)
+    await chan.send("Added")
+"""
+    
 @bot.event
 async def on_ready():
     print("Time to Mahjong!")

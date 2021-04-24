@@ -39,14 +39,14 @@ class TableRate():
 TENSAN = TableRate(name="tensan")
 TENGO = TableRate(name="tengo", rate=0.5, shugi=1)
 TENPIN = TableRate(name="tenpin", rate=1, shugi=2)
-STANDARD = TableRate(name="standard", rate=1, shugi=0, start=30000, target=30000, uma=[15, 5, -5, -15])
+STANDARD = TableRate(name="standard", rate=1, shugi=0, start=25000, target=30000, uma=[30, 10, -10, -30])
 BINGHOU = TableRate(name="binghou", rate=1, shugi=0, start=30000, target=30000, uma=[15, 5, -5, -15])
 
 # BINGHOU Stuff
 
 # http://tenhou.net/0/?log=2020070913gm-0209-19691-21db0170&tw=2
 
-SPECIAL_TILE = "9pin"
+SPECIAL_TILE = "5pin"
 
 CARD = ["Honitsu", "Ura3", "Ikkitsuukan", ">50fu", "Haneman",
         "Nomi Gang", "Jikaze", "Ippatsu", "Tanyao", "Chinitsu",
@@ -112,13 +112,19 @@ def updateBinghou(bing, kans, names, game):
                     bing[agari.player] = bing[agari.player] | (1 << CARD.index("Ura3"))
                 if (yaku == "Riichi" or yaku == "Haitei" or yaku == "Houtei" or yaku == "Rinshan") and sum([i[1] for i in agari.yaku]) == 1:
                     bing[agari.player] = bing[agari.player] | (1 << CARD.index("Nomi Gang"))
+                if yaku == "Rinshan kaihou":
+                    kans[agari.player] += 2
                 if yaku == "Chankan":
-                    kans[agari.player] += 5
+                    kans[agari.player] += 2
+                if yaku == "Sankantsu":
+                    kans[agari.player] += 2
 
             for yaku in agari.yakuman:
                 yaku = "🌟**" + yaku + "**🌟"
                 print("YAKUMAN",yaku,player)
-                bing[agari.player] = bing[agari.player] | (1 << 25)
+                if yaku == "Suukantsu":
+                    kans[agari.player] += 1024
+                #bing[agari.player] = bing[agari.player] | (1 << 25)
 
         for pos, event in enumerate(r.events):
             """
