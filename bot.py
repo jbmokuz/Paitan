@@ -2,11 +2,13 @@ import copy
 import os
 import time
 import urllib
+from datetime import datetime
 
 import requests
 import sys
-from discord.ext import commands
+from discord.ext import commands, tasks
 import discord
+import threading
 
 from database import *
 from parsers.parse import getLogId, intToYaku, parseTenhou, scorePayout, CARD
@@ -32,6 +34,11 @@ BAMBOO = []
 SAKURA = []
 DEFAULT = []
 PROMO = []
+
+MESSAGES = {}
+
+CHIITAN_NAME = "Chiitan"
+LASTUPDATE = time.time()
 
 for n in glob.glob(f"{FILE_PATH}/bamboo/*"):
     test = n.split("/")[-1].split("-")[0]
@@ -332,10 +339,18 @@ async def leave(ctx):
 @bot.command()
 async def kick(ctx, userName):
     """
-    kick a player from a tourney
+    kick a player
     """
     player, chan, club = await get_vars(ctx)
-        
+
+    ret = requests.post("https://tenhou.net/cs/edit/cmd_kick.cgi",data = {"L":club.tenhou_room, "UN":userName,"DENYIP":"0","PW":None})
+
+    if ret.status_code != 200:
+        await chan.send(f"Error {ret.status_code} :<")
+        return
+    await chan.send(ret.text)
+
+    """
     user = getUserFromUserName(userName)
     if user == None:
         await chan.send("Chii-tan is confused... :<")
@@ -346,56 +361,76 @@ async def kick(ctx, userName):
         await chan.send(getError())
         return
     await chan.send("Removed "+userName)
+    """
 
 
+
+def getLobbyPlayers(room):
+
+    global LASTUPDATE
     
+    time.sleep(0.2)
+    
+    ret = requests.post("https://tenhou.net/cs/edit/cmd_get_players.cgi",data = {"L":room})
+
+    LASTUPDATE = time.time()
+    
+    if ret.status_code != 200:
+        return ["Can't get list :<",None,None]
+
+    ret = ret.text
+    idle = urllib.parse.unquote(ret.split("&")[0][5:]).split(",")
+    play = urllib.parse.unquote(ret.split("&")[1][5:]).split(",")
+    if play == [""]:
+        play = []
+    if idle == [""]:
+        idle = []
+
+    ret = f"```Waiting: {len(idle)} Playing: {len(play)}\nTotal: {len(idle)+len(play)} Updated: {datetime.now()}\n\n"
+    
+    for p in play:
+        ret += "⭐ "+p+"\n"
+    for i in idle:
+        ret += ""+i+"\n"
+    ret += "```"
+    return [ret,idle,play]
+
 @bot.command()
 async def list(ctx):
     """
     Join current tourney
     """
+
+    global MESSAGES
+    
     player, chan, club = await get_vars(ctx)
     if club.tourney_id == None:
         await chan.send("No tourney is currently running")
         return
 
-    ret = requests.post("https://tenhou.net/cs/edit/cmd_get_players.cgi",data = {"L":club.tenhou_room})
+    ret, idle, play = getLobbyPlayers(club.tenhou_room)
+    # Make new list message, update and delete
+    listMessage = await chan.send(ret)
+    if club.club_id in MESSAGES:
+        await MESSAGES[club.club_id].delete()
+    MESSAGES[club.club_id] = [listMessage,time.time(),club.tenhou_room]
 
-    if ret.status_code != 200:
-        await chan.send("Could not get list :<")
+@bot.command()
+async def chiitan(ctx):
+    """
+    add Chiitan to the lobby! (She will always sit out if there is a full table during shuffle)
+    """
+    player, chan, club = await get_vars(ctx)
 
-    ret = ret.text
-    idle = urllib.parse.unquote(ret.split("&")[0][5:]).split(",")
-    play = urllib.parse.unquote(ret.split("&")[1][5:]).split(",")
-        
-    print(idle, play)
-    
+    message, idle, play = getLobbyPlayers(club.tenhou_room)
 
-    tourney = getTourney(club.tourney_id)
-
-    ret = "```In Queue:\n\n"
-    # Havent shuffled for tables yet
-    if 1==1: #tourney.current_round == 0:
-        users = getUsersForTourney(club.tourney_id)
-        if users == []:
-            await chan.send("No users have joined")
-            return
-        for u in users:
-            ret += u.user_name
-            if u.tenhou_name != None:
-                ret += " (" + u.tenhou_name + ")"
-            ret += "\n"
-
+    if "Chiitan" in idle:
+        await chan.send("Chiitan is READY")
+    elif "Chiitan" in play:
+        await chan.send("Chiitan is already playing...")
     else:
-        pass
-    
-    #if tourney.current_round != 0:
-    #    ret += "```\n\n```TABLES:"
-    #    ret += printTables(tourney)
-
-    ret += "```"
-    await chan.send(ret)
-
+        os.popen(f"/usr/bin/python3 /home/moku/bots/tenhou-python-bot/project/main.py -u ID272B102E-c38neUTh -c {club.tenhou_room[:9]}")
+        await chan.send("Chii~<3")
 
 
 #@commands.has_permissions(administrator=True)
@@ -406,106 +441,37 @@ async def shuffle(ctx):
     """
     player, chan, club = await get_vars(ctx)
 
-    if club.tourney_id == None:
-        await chan.send("No tourney is currently running")
+    message, idle, play = getLobbyPlayers(club.tenhou_room)
+    
+    if len(idle) < 4:
+        await chan.send("Need more players!")
         return
 
-    tourney = getTourney(club.tourney_id)
-    users = getUsersForTourney(club.tourney_id)
-
-    # We are starting the next round now!
-    startNextRound(club.tourney_id)
-
-    ret = "```"
-
-    tables = getTablesForRoundTourney(tourney.tourney_id, tourney.current_round - 1)
+    isChiitan = False
+    if CHIITAN_NAME in idle:
+        idle.remove(CHIITAN_NAME)
+        isChiitan = True
     
-    # First round is just random
-    if 1==1: #tourney.current_round == 1 or tables == [] or len(users) < len(tables):
+    random.shuffle(idle)
+    tables = [[u for u in idle[i:i + 4]] for i in range(0, len(idle), 4)]
+    if len(tables[-1]) == 3:
+        tables[-1].append(CHIITAN_NAME)
+    print(tables)
 
-        random.shuffle(users)
-        tables = [[u.user_id for u in users[i:i + 4]] for i in range(0, len(users), 4)]
-
-
-    # We want to ensure no one plays anyone they played the first round
-    # Need at least 16 people, but should still get you the least overlap?
-    else:
-
-        byes = []
-
-        print(tables)
-        userIds = [u.user_id for u in users]
-        
-        # This is a bye table as there is not 4 players
-        # @NOTE always assuming 4 player mahjong for now
-        if tables[-1].pei == None:
-            byes = tables[-1]
-            byes = [byes.ton, byes.nan, byes.xia, byes.pei]
-            tables = tables[:-1]
-
-        # remove people not in the list
-        for userId in byes:
-            if not userId in userIds:
-                byes.remove(userId)
-
-        tables = [[i.ton, i.nan, i.xia, i.pei] for i in tables]
-        flatTables = [a for l in tables for a in l]
-        random.shuffle(flatTables)
-
-        """
-        def replaceLeavers(newUserId):
-            for table in tables:
-                for uid in tables:
-                    if not uid in userIds:
-                        table[table.get(uid)] = newUserId
-                        return True
-            return False
-
-        [a,b,c,d][e,f,g,h][i]
-
-        [a,c,d,e,f,g,h]
-        [i,j,k,l,m,n]
-        """
-        
-        # Shuffle the order of all the tables 
-        random.shuffle(tables)
-
-        # Shuffle all the tables players orders
-        for t in tables:
-            random.shuffle(t)
-
-        # Make it so the tables have no repeating players
-        for off in range(1, 4):
-            tmp = [[] for i in tables]
-            for i, t in enumerate(tables):
-                tmp[i] += tables[i][:off]
-                tmp[i] += tables[(i + 1) % len(tables)][off:]
-            tables = tmp
-
-        count = 0
-        newByes = []
-
-        for i, b in enumerate(byes):
-            if b == None:
-                break
-            tmp = tables[count][i]
-            tables[count][i] = b
-            newByes.append(tmp)
-            count = (count + 1) % len(tables)
-
-        tables += [newByes]
-
+    count = 1
+    heading = True
+    
     for t in tables:
-        if len(t) < 4:
-            t += [None for i in range(4 - len(t))]
-        createTable(tourney.tourney_id, tourney.current_round, t[0], t[1], t[2], t[3])
+        if len(t) ==  4:
+            ret = "```"
+            ret += startGame(t[0],t[1],t[2],t[3],club.tenhou_rules,club.tenhou_room,heading)  
+            ret += f"Table({count}) {t[0]}, {t[1]}, {t[2]}, {t[3]}\n"
+            ret += "```"
+            await chan.send(ret)
+            heading = False
+    
 
-    # Now we print the stuff out
-
-    ret += printTables(tourney)
-    ret += "```"
-
-    await chan.send(ret)
+    
 
 
 # @bot.command()
@@ -810,9 +776,8 @@ async def score(ctx, log=None, rate=None, shugi=None):
                 await log_chan.send(ret)
     """
 
-
 @bot.command()
-async def start(ctx, p1=None, p2=None, p3=None, p4=None, tableName="general", randomSeat="true"):
+async def start(ctx, p1=None, p2=None, p3=None, p4=None):
     """
     Start Tenhou Game
     Args:
@@ -821,58 +786,21 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, tableName="general", ra
 
     player, chan, club = await get_vars(ctx)
 
-    player_names = []
-    
+    await chan.send("```"+startGame(p1,p2,p3,p4,club.tenhou_rules,club.tenhou_room)+"```")
+
+def startGame(p1,p2,p3,p4,roomRules,room,heading=True):
     if (p1 == None or p2 == None or p3 == None or p4 == None):
-        if club.tourney_id != None:
-            
-            user = getUser(player.id)
-            tourney = getTourney(club.tourney_id)
-            tables = getTablesForRoundTourney(tourney.tourney_id, tourney.current_round)
-            
-            count = 0
-            # If we have started... lets get the players table!
-            if tourney.current_round != 0:
-                for table in tables:
-                    count += 1
-                    currentTable = [table.ton, table.nan, table.xia, table.pei]
-                    if user.user_id in currentTable:
-                        tableName = f"table{count}"
-                        for uid in currentTable:
-                            u = getUser(uid)
-                            print(u)
-                            if u == None:
-                                await chan.send(f"ERROR: Could not find user {uid}\nI think you have a bye")
-                                #await chan.send(getError())
-                                return
-                            if u.tenhou_name == None:
-                                await chan.send(f"No tenhou name for user {u.user_name}")
-                            else:
-                                print("COW")
-                                player_names.append(u.tenhou_name)
+        return f"Please specify 4 players space separated"
     else:
         player_names = [p1, p2, p3, p4]
 
-    print(player_names)
-    print(tableName)
     
-    if len(player_names) < 4:
-        await chan.send(f"Please specify 4 players space separated")
-        return
-
-
-    users = [getUserFromTenhouName(u) for u in player_names]
-    for u in users:
-        if u:
-            updateUserTable(u.user_id, tableName)
-
-    
-    print(f"Starting, Admin:{club.tenhou_room} Rules:{club.tenhou_rules}")
+    print(f"Starting, Admin:{room} Rules:{roomRules}")
 
     rules = []
 
-    rulez = int(club.tenhou_rules,16)
-    
+    rulez = int(roomRules,16)
+
     if rulez % 2:
         rules.append("Aka Ari")
     else:
@@ -893,15 +821,19 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, tableName="general", ra
     else:
         rules.append("Shugi Nashi")
             
-    await chan.send("```Starting: " + " | ".join(rules)+"```")
+    ret = ""
+
+    if heading:
+        ret += "Starting: " + " | ".join(rules)+"\n"
         
     data = {
-        "L": club.tenhou_room,
-        "R2": club.tenhou_rules,
+        "L": room,
+        "R2": roomRules,
         "RND": "default",
         "WG": "1"
     }
 
+    randomSeat = "true"
     if randomSeat.lower() != "false" and randomSeat.lower() != "no":
         random.shuffle(player_names)
         # data["RANDOMSTART"] = "on"
@@ -912,10 +844,9 @@ async def start(ctx, p1=None, p2=None, p3=None, p4=None, tableName="general", ra
     resp = requests.post('https://tenhou.net/cs/edit/cmd_start.cgi', data=data)
     print(resp)
     if resp.status_code != 200:
-        await chan.send(f"http error {resp.status_code} :<")
-        return
+        return f"http error {resp.status_code} :<"
 
-    await chan.send(urllib.parse.unquote(resp.text))
+    return ret + urllib.parse.unquote(resp.text)
 
 
 
@@ -1136,52 +1067,32 @@ async def role(ctx, newRole=None):
     await player.add_roles(role)
     await chan.send(f"Added to {newRole}")
 
-    
-"""
-@bot.command()
-async def role(ctx, role):
-
-    
-    player, chan, gi =  await get_vars(ctx)
-    roles = await chan.guild.fetch_roles()
-
-    ROLES = ["san","go","pin"]
-
-    role = role.lower()
-    
-    if not role in ROLES:
-        await chan.send(f"{role} is not a role!\nValid roles {ROLES}")
-        return 
-
-    role = role[0].upper() + role[1:]
-                        
-    if not role in [i.name for i in roles]:
-        await chan.guild.create_role(name=role)
-
-    role = discord.utils.get(chan.guild.roles, name=role)
-    await player.add_roles(role)
-    await chan.send("Added")
-"""
-
-"""
-@bot.command()
-async def role(ctx):
-    player, chan, gi =  await get_vars(ctx)
-    roles = await chan.guild.fetch_roles()
-    if not "Ping for Games" in [i.name for i in roles]:
-        await chan.guild.create_role(name="Ping for Games")
-
-    role = discord.utils.get(chan.guild.roles, name="Ping for Games")
-    await player.add_roles(role)
-    await chan.send("Added")
-"""
-    
+        
 @bot.event
 async def on_ready():
     print("Time to Mahjong!")
     print("Logged in as: {}".format(bot.user.name))
+    updateList.start()
 
 
+@tasks.loop(seconds=10.0)
+async def updateList():
+    global MESSAGES
+    for clubId in MESSAGES:
+        message, lastUpdate, room = MESSAGES[clubId]
+        # Dont want to spam tenhou too much
+        #if lastUpdate + 15 > time.time():
+        ret, idle, play = getLobbyPlayers(room)
+
+        if lastUpdate+(60*5) < time.time():
+            await message.edit(content=ret+"\n(No longer updating this list)")
+            del MESSAGES[clubId]
+        else:
+            await message.edit(content=ret)
+                
+        #if clubId in MESSAGES:
+        #    MESSAGES[clubId][1] = time.time()
+    
 @bot.event
 async def on_error(event, *args, **kwargs):
     print("ERROR!")
