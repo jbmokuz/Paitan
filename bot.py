@@ -6,7 +6,7 @@ import urllib
 import requests
 import sys
 from discord.ext import commands
-import discord
+#import discord
 
 from database import *
 from parsers.parse import getLogId, intToYaku, parseTenhou, scorePayout, CARD
@@ -15,44 +15,13 @@ from parsers.parse import TENSAN, TENGO, TENPIN, STANDARD, BINGHOU
 if len(sys.argv) > 1:
     TOKEN = os.environ["DISCORD_DEV_TOKEN"]
 else:
-    TOKEN = os.environ["CHIITAN_TOKEN"]
+    TOKEN = os.environ["DISCORD_BOT_TOKEN"]
 
-bot = commands.Bot("$")
-
-ROULETTE = []
+bot = commands.Bot(command_prefix='$')
 
 EMOJI_WARNING = "⚠️"
 EMOJI_ERROR = "🚫"
 EMOJI_OK = "👍"
-
-FILE_PATH = "./app/static/chars"
-import glob
-
-BAMBOO = []
-SAKURA = []
-DEFAULT = []
-PROMO = []
-
-for n in glob.glob(f"{FILE_PATH}/bamboo/*"):
-    test = n.split("/")[-1].split("-")[0]
-    if not test in BAMBOO:
-        BAMBOO.append(test)
-
-for n in glob.glob(f"{FILE_PATH}/sakura/*"):
-    test = n.split("/")[-1].split("-")[0]
-    if not test in SAKURA:
-        SAKURA.append(test)
-
-for n in glob.glob(f"{FILE_PATH}/default/*"):
-    test = n.split("/")[-1].split("-")[0]
-    if not test in DEFAULT:
-        DEFAULT.append(test)
-
-for n in glob.glob(f"{FILE_PATH}/sakura/*"):
-    test = n.split("/")[-1].split("-")[0]
-    if not test in PROMO:
-        PROMO.append(test)
-
 
 async def get_vars(ctx):
     player = ctx.author
@@ -68,22 +37,6 @@ async def get_vars(ctx):
 
 # id=119046709983707136 name='moku' discriminator='9015'
 
-## ROULETTE ##
-
-def show_roulette():
-    global ROULETTE
-    ret = ""
-    for i in ROULETTE:
-        if i < 2:
-            ret += "🀫"
-        if i == 2:
-            ret += "🀆"
-        if i == 3:
-            ret += "🀂"
-        ret += " "
-    return ret
-
-
 @bot.command()
 async def roll(ctx, dice=2):
     """
@@ -94,36 +47,6 @@ async def roll(ctx, dice=2):
     for i in range(dice):
         rolls.append(random.randint(1,6))
     await chan.send(f"{rolls}\n{sum(rolls)}")
-
-
-@bot.command()
-@commands.has_permissions(administrator=True)
-async def load_and_spin(ctx):
-    global ROULETTE
-    player, chan, club = await get_vars(ctx)
-    ROULETTE = [0, 0, 0, 0, 1]
-    random.shuffle(ROULETTE)
-    await chan.send(show_roulette())
-
-
-@bot.command()
-async def pull_tile(ctx):
-    global ROULETTE
-    player, chan, club = await get_vars(ctx)
-    pos = len([i for i in ROULETTE if i < 2]) - 1
-    if ROULETTE[pos] == 1:
-        await chan.send("BANG!")
-        time.sleep(2)
-        await chan.send("YOU")
-        await chan.send("HAVE")
-        await chan.send("BEEN")
-        await chan.send("XIAT!")
-    else:
-        await chan.send("bang?")
-        time.sleep(2)
-        await chan.send("It was a blank")
-    ROULETTE[pos] += 2
-    await chan.send(show_roulette())
 
 
 #################
@@ -180,120 +103,6 @@ async def createSiteAccount(player, chan):
         await player.send(f"You are now a member of {chan.guild.name} \n Manage account @ https://yakuhai.com")
     else:
         await player.send(getError())
-
-@bot.command()
-async def gocha_pick(ctx, name=None):
-    """
-    Pick your free starting character!  (cost free)
-    Args:
-        name: Either wanjirou or ichihime
-    """
-    global DEFAULT
-    player, chan, club = await get_vars(ctx)
-
-    print(name)
-    if not (name in DEFAULT):
-        await chan.send("Must pick either wanjirou or ichihime")
-        return
-
-    user = getUser(player.id)
-    if user == None:
-        await chan.send(getError())
-        return
-
-    for char in DEFAULT:
-        if char in user.chars:
-            await chan.send("You already have a default char!")
-            return
-
-    os.popen(f"python3 emote_client.py gocha {name} 1 BOT").read()
-    updateUserJade(player.id, user.jade, name, None)
-    await chan.send(f"You got {name}!")
-
-@bot.command()
-async def gocha_roll(ctx, type=None):
-    """
-    Roll the gacha! (cost 200 jade)
-    Args:
-        type: Either bamboo or sakura!
-    """
-    global SAKURA
-    global BAMBOO
-    player, chan, club = await get_vars(ctx)
-
-    print(type)
-    if not (type == "bamboo" or type == "sakura"):
-        await chan.send("Must pick either bamboo or sakura")
-        return
-
-    user = getUser(player.id)
-    if user == None:
-        await chan.send(getError())
-        return
-
-    newChar = ""
-    if user.jade >= 200:
-        if type == "bamboo":
-            newChar = random.choice(BAMBOO)
-        if type == "sakura":
-            newChar = random.choice(SAKURA)
-    else:
-        await chan.send(f"You only have {user.jade} jade!")
-        return
-    await chan.send("Rolling...")
-    #if random.randint(0,2) == 0 and len(user.chars.split(",")) > 2:
-    #    await chan.send(f"Outch, you got a green item... RIP")
-    #    updateUserJade(player.id, user.jade - 200, None, None)
-    #    return
-    os.popen(f"python3 emote_client.py gocha {newChar} 1 BOT").read()
-    if newChar in user.chars:
-        await chan.send(f"You got {newChar}! I hope that was not a duplicate... RIP")
-    else:
-        await chan.send(f"You got {newChar}!")
-    updateUserJade(player.id, user.jade - 200, newChar, None)
-
-
-@bot.command()
-async def gocha_bond(ctx, name=None):
-    """
-    Get all the outfits for a char! (cost 300 jade)
-    Args:
-        name: Name (WARNING: mahjong soul+ don't have a bond (Washizu does though)!)
-    """
-    global SAKURA
-    global BAMBOO
-    global DEFAULT
-    global PROMO
-    player, chan, club = await get_vars(ctx)
-
-    if not (name in SAKURA or name in BAMBOO or name in DEFAULT or name in PROMO):
-        await chan.send("Not a real char!")
-        return
-
-    user = getUser(player.id)
-    if user.jade >= 300:
-        updateUserJade(player.id, user.jade - 300, None, name)
-    else:
-        await chan.send(f"You only have {user.jade} jade!")
-        return
-    if not name in user.chars:
-        await chan.send(f"You got the new outfits and stuff for {name}! Sadly you don't own this char, what a shame!")
-    else:
-        await chan.send(f"You got the new outfits and stuff for {name}!")
-
-@bot.command()
-async def set_table(ctx, table="general"):
-    """
-    Set the table you are emoting at!
-    Args:
-        chan_name: Name of the chan (Ex:table1)!
-    """
-    player, chan, club = await get_vars(ctx)
-    ret = updateUserTable(player.id, table)
-    if ret == None:
-        await chan.send(getError())
-        return
-    await chan.send(f"Updated to table {table}")
 
 
 @bot.command()
@@ -1195,5 +1004,9 @@ async def on_error(event, *args, **kwargs):
     print("Exception value:", value)
     print("Exception traceback object:", traceback)
 
-
+@bot.event
+async def on_message(message):
+    await bot.process_commands(message)
+    
+    
 bot.run(TOKEN)
