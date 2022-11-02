@@ -420,7 +420,8 @@ for key in Game.__dict__:
 def getGameObject(log):
     if "https://" in log.lower() or "http://" in log.lower():
         log = log.split("=")[1].split("&")[0]
-        xml = requests.get("http://tenhou.net/0/log/?"+log).text
+        headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+        xml = requests.get("http://tenhou.net/0/log/?"+log,headers=headers).text
         game = Game('DEFAULT')        
         game.decode(io.StringIO(xml))
         print("Prasing http://tenhou.net/0/log/?"+log)

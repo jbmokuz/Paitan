@@ -49,6 +49,10 @@ def addChars(owned, bonded, path):
 def binghou_rules():
     return render_template('binghou_rules.html')
 
+@app.route("/monopoly", methods=['GET', 'POST'])
+def monopoly():
+    return render_template('monopoly.html')
+
 @app.route("/emotes", methods=['GET', 'POST'])
 def emotes():
     char = request.args.get('char')
