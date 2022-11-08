@@ -514,9 +514,7 @@ body {
 .top-row {
   grid-column: 2 / 11;
   grid-row: 1; }
-  .top-row .container {
-    transform: rotate(180deg); }
-
+  
 .right-row {
   grid-column: 11;
   grid-row: 2 / 11; }
