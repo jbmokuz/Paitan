@@ -49,10 +49,6 @@ def addChars(owned, bonded, path):
 def binghou_rules():
     return render_template('binghou_rules.html')
 
-@app.route("/monopoly", methods=['GET', 'POST'])
-def monopoly():
-    return render_template('monopoly.html')
-
 @app.route("/emotes", methods=['GET', 'POST'])
 def emotes():
     char = request.args.get('char')
@@ -286,6 +282,33 @@ def binghou(userName):
         binghou = binghou >> 1
 
     return render_template("binghou.html", binghou=binghouL, userName=userName, card=CARD)
+
+
+
+@app.route("/monopoly/<path:userName>", methods=['GET'])
+def monopoly(userName):
+    binghou = 0
+
+    for game in getGamesForUser(userName):
+        print(game)
+        if game.ton == userName:
+            binghou = binghou | game.ton_binghou
+        if game.nan == userName:
+            binghou = game.nan_binghou | binghou
+        if game.xia == userName:
+            binghou = game.xia_binghou | binghou
+        if game.pei == userName:
+            binghou = game.pei_binghou | binghou
+
+    binghouL = []
+
+    print(binghou)
+    for i in range(25):
+        collect = 0 if binghou & 1 == 0 else 1
+        binghou = binghou >> 1
+        binghouL.append([collect,CARD[i],CARD[i]])
+
+    return render_template('monopoly.html',board=binghouL, userName=userName)
 
 
 """

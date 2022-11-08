@@ -270,8 +270,6 @@ async def score(ctx, log=None, rate=None, shugi=None):
         tourney = getTourney(club.tourney_id)
         game = createTenhouGame(logId, scoresOrdered, tableRate.name, tourney.current_round)
     else:
-        for p in scoresOrdered:
-            p.binghou = p.binghou & (1 << CARD.index("Kan!"))
         game = createTenhouGame(logId, scoresOrdered, tableRate.name)
         
     if game == None:

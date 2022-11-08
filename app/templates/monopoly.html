@@ -1,4 +1,15 @@
 <!doctype html>
+
+{% macro property(color, prop) -%}
+    {% if  prop[0] == 0 %}
+    <div class="color-bar white"></div>
+    {% else %}
+    <div class="color-bar {{ color }}"></div>
+    {% endif %}
+    <div class="name"> {{ prop[1] }} </div>
+    <div class="price"> {{ prop[2] }} </div>
+{%- endmacro %}
+
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
@@ -32,16 +43,12 @@
 				<div class="row horizontal-row bottom-row">
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar light-blue"></div>
-							<div class="name">Connecticut Avenue</div>
-							<div class="price">PRICE $120</div>
+						  {{ property("light-blue",board[4]) }}
 						</div>
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar light-blue"></div>
-							<div class="name">Vermont Avenue</div>
-							<div class="price">Price $100</div>
+						  {{ property("light-blue",board[3]) }}
 						</div>
 					</div>
 					<div class="space chance">
@@ -52,9 +59,7 @@
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar light-blue"></div>
-							<div class="name">Oriental Avenue</div>
-							<div class="price">Price $100</div>
+						  {{ property("light-blue",board[2]) }}
 						</div>
 					</div>
 					<div class="space railroad">
@@ -73,9 +78,7 @@
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar dark-purple"></div>
-							<div class="name">Baltic Avenue</div>
-							<div class="price">Price $50</div>
+						  {{ property("dark-purple",board[1]) }}
 						</div>
 					</div>
 					<div class="space community-chest">
@@ -87,15 +90,13 @@
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar dark-purple"></div>
-							<div class="name three-line-name">Mediter-<br>ranean<br>Avenue</div>
-							<div class="price">Price $50</div>
+						  {{ property("dark-purple",board[0]) }}
 						</div>
 					</div>
 				</div>
 
 				<div class="space corner jail">
-					<div class="just">Just</div>
+					<div class="just">Already</div>
 					<div class="drawing">
 						<div class="container">
 							<div class="name">In</div>
@@ -105,25 +106,21 @@
 								<div class="bar"></div>
 								<i class="person fa fa-frown-o"></i>
 							</div>
-							<div class="name">Jail</div>
+							<div class="name">Furiten</div>
 						</div>
 					</div>
-					<div class="visiting">Visiting</div>
+					<div class="visiting">Bailing</div>
 				</div>
 
 				<div class="row vertical-row left-row">
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar orange"></div>
-							<div class="name">New York Avenue</div>
-							<div class="price">Price $200</div>
+						  {{ property("purple",board[10]) }}
 						</div>
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar orange"></div>
-							<div class="name">Tennessee Avenue</div>
-							<div class="price">Price $180</div>
+						  {{ property("orange",board[9]) }}
 						</div>
 					</div>
 					<div class="space community-chest">
@@ -135,9 +132,7 @@
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar orange"></div>
-							<div class="name">St. James Avenue</div>
-							<div class="price">Price $180</div>
+						  {{ property("orange",board[8]) }}
 						</div>
 					</div>
 					<div class="space railroad">
@@ -149,16 +144,12 @@
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar purple"></div>
-							<div class="name">Virginia Avenue</div>
-							<div class="price">Price $160</div>
+						  {{ property("purple",board[7]) }}
 						</div>
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar purple"></div>
-							<div class="name">States Avenue</div>
-							<div class="price">Price $140</div>
+						  {{ property("purple",board[6]) }}
 						</div>
 					</div>
 					<div class="space utility electric-company">
@@ -170,16 +161,14 @@
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar purple"></div>
-							<div class="name">St. Charles Place</div>
-							<div class="price">Price $140</div>
+						  {{ property("purple",board[5]) }}
 						</div>
 					</div>
 				</div>
 
 				<div class="space corner free-parking">
 					<div class="container">
-						<div class="name">Free</div>
+						<div class="name">Expensive</div>
 						<i class="drawing fa fa-car"></i>
 						<div class="name">Parking</div>
 					</div>
@@ -188,9 +177,7 @@
 				<div class="row horizontal-row top-row">
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar red"></div>
-							<div class="name">Kentucky Avenue</div>
-							<div class="price">Price $220</div>
+						  {{ property("red",board[11]) }}
 						</div>
 					</div>
 					<div class="space chance">
@@ -201,16 +188,12 @@
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar red"></div>
-							<div class="name">Indiana Avenue</div>
-							<div class="price">Price $220</div>
+						  {{ property("red",board[12]) }}
 						</div>
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar red"></div>
-							<div class="name">Illinois Avenue</div>
-							<div class="price">Price $200</div>
+						  {{ property("red",board[13]) }}
 						</div>
 					</div>
 					<div class="space railroad">
@@ -222,16 +205,12 @@
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar yellow"></div>
-							<div class="name">Atlantic Avenue</div>
-							<div class="price">Price $260</div>
+						  {{ property("yellow",board[14]) }}
 						</div>
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar yellow"></div>
-							<div class="name">Ventnor Avenue</div>
-							<div class="price">Price $260</div>
+						  {{ property("yellow",board[15]) }}
 						</div>
 					</div>
 					<div class="space utility waterworks">
@@ -243,9 +222,7 @@
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar yellow"></div>
-							<div class="name">Marvin Gardens</div>
-							<div class="price">Price $280</div>
+						  {{ property("yellow",board[16]) }}
 						</div>
 					</div>
 				</div>
@@ -261,16 +238,12 @@
 				<div class="row vertical-row right-row">
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar green"></div>
-							<div class="name">Pacific Avenue</div>
-							<div class="price">Price $300</div>
+						  {{ property("green",board[17]) }}
 						</div>
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar green"></div>
-							<div class="name three-line-name">North Carolina Avenue</div>
-							<div class="price">Price $300</div>
+						  {{ property("green",board[18]) }}
 						</div>
 					</div>
 					<div class="space community-chest">
@@ -282,9 +255,7 @@
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar green"></div>
-							<div class="name long-name">Pennsylvania Avenue</div>
-							<div class="price">Price $320</div>
+						  {{ property("green",board[19]) }}
 						</div>
 					</div>
 					<div class="space railroad">
@@ -302,9 +273,7 @@
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar dark-blue"></div>
-							<div class="name">Park Place</div>
-							<div class="price">Price $350</div>
+						  {{ property("dark-blue",board[20]) }}
 						</div>
 					</div>
 					<div class="space fee luxury-tax">
@@ -316,9 +285,7 @@
 					</div>
 					<div class="space property">
 						<div class="container">
-							<div class="color-bar dark-blue"></div>
-							<div class="name">Boardwalk</div>
-							<div class="price">Price $400</div>
+						  {{ property("dark-blue",board[21]) }}
 						</div>
 					</div>
 				</div>
