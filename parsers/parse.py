@@ -48,6 +48,60 @@ BINGHOU = TableRate(name="binghou", rate=1, shugi=0, start=30000, target=30000, 
 
 SPECIAL_TILE = "5pin"
 
+
+class Property:
+    def __init__(self, name, sub, pos):
+        self.name = name
+        self.sub = sub
+        self.pos = pos
+        
+    def isScored(game):
+        return [0,0,0,0]
+
+
+class Pizza(Property):
+    def __init__(self):
+        super().__init__("Pizza", "Your winning tile is a 1pin",0)
+
+    def score(self,game):
+        bing = [0,0,0,0]
+        for r in game.rounds:
+            for agari in r.agari:
+                if agari.machi[0].asdata()[:-1] == "5s":
+                    bing[agari.player] = 1
+        return bing
+
+
+class Steal(Property):
+    def __init__(self):
+        super().__init__("Steal", "Tsubame Gaeshi or Chankan",1)
+
+    def score(self,game):
+        bing = [0,0,0,0]
+        for r in game.rounds:
+            for agari in r.agari:
+                for yaku, han in agari.yaku:
+                    if yaku == "Chankan":
+                        bing[agari.player] = 1
+                    elif agari.type == "RON":
+                        winPlayerTurn = r.turns[agari.player]
+                        losePlayer = agari.fromPlayer
+                        if (losePlayer in r.reaches):
+                            reachPos = r.reaches.index(losePlayer)
+                            if (agari.player > losePlayer):
+                                if (r.reach_turns[reachPos] == winPlayerTurn):
+                                    bing[agari.player] = 1
+                            elif (r.reach_turns[reachPos] == winPlayerTurn + 1):
+                                bing[agari.player] = 1
+                            print(reachPos)
+
+                        
+
+        return bing
+
+
+Properties = [Pizza(),Steal()]
+
 CARD = ["Honitsu", "Ura3", "Ikkitsuukan", ">50fu", "Haneman",
         "Nomi Gang", "Jikaze", "Ippatsu", "Tanyao", "Chinitsu",
         "Chanta", "Riichi", "Kan!", "Uradora", "Chiitoitsu",
@@ -75,6 +129,13 @@ def getTileCount(agari,countTile):
     return tileCount
     
 def updateBinghou(bing, kans, names, game):
+    for prop in Properties:
+        for player, found in enumerate(prop.score(game)):
+            if found == 1:
+                bing[player] = bing[player] | (1 << prop.pos)
+    print(bing)
+        
+    """
     global CARD
 
     for r in game.rounds:
@@ -127,13 +188,12 @@ def updateBinghou(bing, kans, names, game):
                 #bing[agari.player] = bing[agari.player] | (1 << 25)
 
         for pos, event in enumerate(r.events):
-            """
-            if not event.type in ["Discard","Call"]:
-                print(event.type,event.tile)
-            if event.type == "Dora":
-                import pdb
-                pdb.set_trace()
-            """
+            
+            #if not event.type in ["Discard","Call"]:
+            #    print(event.type,event.tile)
+            #if event.type == "Dora":
+            #    import pdb
+            #    pdb.set_trace()
             if event.type == "Call":
                 # Open kan
                 if event.meld.type == "chakan":
@@ -150,7 +210,7 @@ def updateBinghou(bing, kans, names, game):
                     bing[event.player] = bing[event.player] | (1 << CARD.index("Kan!"))
                     print("KAN", player, r.events[pos - 1])
                     kans[event.player] += 1
-
+    """
 
 def getLogId(log):
     ret = ""
@@ -171,6 +231,7 @@ def getLogId(log):
 
 
 def parseTenhou(log):
+    print("LOG: "+log)
     game = getGameObject(log)
     if game == None:
         return None
