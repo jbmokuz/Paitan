@@ -391,6 +391,7 @@ class Game(Data):
         self.rounds = []
         self.players = []
         for event in events:
+            print("E:",event)
             self.TAGS.get(event.tag, self.default)(self, event.tag, event.attrib)
         del self.round
 

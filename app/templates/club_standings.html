@@ -43,11 +43,7 @@ tr:nth-child(even) {
     </tr>
       {% for score,name in standings %}
     <tr>
-      {% if club.tenhou_rate != None and club.tenhou_rate.lower() == "binghou" %}
-      <th><a href="{{ url_for('binghou',userName=name)}}">{{name}}</a></th>
-      {% else %}
-      <th>{{name}}</th>
-      {% endif %}
+      <th><a href="{{ url_for('monopoly',userName=name)}}">{{name}}</a></th>
       <th>{{ score }}</th>
     </tr>
       {% endfor %}

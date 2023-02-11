@@ -55,26 +55,37 @@ class Property:
         self.sub = sub
         self.pos = pos
         
-    def isScored(game):
+    def score(game):
         return [0,0,0,0]
 
 
-class Pizza(Property):
-    def __init__(self):
-        super().__init__("Pizza", "Your winning tile is a 1pin",0)
+class Yaku(Property):
+    def __init__(self,_name,_sub,_pos):
+        super().__init__(_name,_sub,_pos)
 
     def score(self,game):
         bing = [0,0,0,0]
         for r in game.rounds:
             for agari in r.agari:
-                if agari.machi[0].asdata()[:-1] == "5s":
+                for yaku, han in agari.yaku:
+                    if yaku == self.name:
+                        bing[agari.player] = 1
+
+class Pizza(Property):
+    def __init__(self,pos):
+        super().__init__("Pizza", "Your winning tile is a 1pin",pos)
+
+    def score(self,game):
+        bing = [0,0,0,0]
+        for r in game.rounds:
+            for agari in r.agari:
+                if agari.machi[0].asdata()[:-1] == "1p":
                     bing[agari.player] = 1
         return bing
 
-
 class Steal(Property):
-    def __init__(self):
-        super().__init__("Steal", "Tsubame Gaeshi or Chankan",1)
+    def __init__(self,pos):
+        super().__init__("Steal", "Tsubame Gaeshi or Chankan",pos)
 
     def score(self,game):
         bing = [0,0,0,0]
@@ -88,19 +99,56 @@ class Steal(Property):
                         losePlayer = agari.fromPlayer
                         if (losePlayer in r.reaches):
                             reachPos = r.reaches.index(losePlayer)
-                            if (agari.player > losePlayer):
-                                if (r.reach_turns[reachPos] == winPlayerTurn):
-                                    bing[agari.player] = 1
-                            elif (r.reach_turns[reachPos] == winPlayerTurn + 1):
-                                bing[agari.player] = 1
+                            reachTurn = r.reach_turns[reachPos]
                             print(reachPos)
+                            print(reachTurn)
+                            print(r.turns[losePlayer])
+                            print("="*12)
+                            if reachTurn == r.turns[losePlayer]:
+                                bing[agari.player] = 1
+        return bing
 
-                        
+class TrainDelay(Property):
+    def __init__(self,pos):
+        super().__init__("Train Delay", "Riichi and win 6 or more turns later",pos)
+
+    def score(self,game):
+        bing = [0,0,0,0]
+        for r in game.rounds:
+            for agari in r.agari:
+                for yaku, han in agari.yaku:
+                    if yaku == "Riichi":
+                        winPlayerTurn = r.turns[agari.player]
+                        reachPos = r.reaches.index(agari.player)
+                        reachTurn = r.reach_turns[reachPos]
+                        if (winPlayerTurn - reachTurn > 6):
+                            bing[agari.player] = 1
 
         return bing
 
 
-Properties = [Pizza(),Steal()]
+class NEWS(Property):
+    def __init__(self,pos):
+        super().__init__("NEWS", "Discard NEWS as first 4 discards",pos)
+
+    def score(self,game):
+        bing = [0,0,0,0]
+        news = ["nw","ew","sw","2p"]
+        for r in game.rounds:
+            playerHands = [[],[],[],[]]
+            for event in r.events:
+                if event.type == "Discard":
+                    player = event.player
+                    playerHands[player].append(event.tile.asdata()[:2])
+                    if len(playerHands[player]) == 4:
+                        print("HAND!")
+                        print(playerHands[player])
+                        if playerHands[player] == news:
+                            bing[player] = 1
+        return bing
+
+
+Properties = [Pizza(0),Steal(1),TrainDelay(2),NEWS(3)]
 
 CARD = ["Honitsu", "Ura3", "Ikkitsuukan", ">50fu", "Haneman",
         "Nomi Gang", "Jikaze", "Ippatsu", "Tanyao", "Chinitsu",
@@ -134,7 +182,6 @@ def updateBinghou(bing, kans, names, game):
             if found == 1:
                 bing[player] = bing[player] | (1 << prop.pos)
     print(bing)
-        
     """
     global CARD
 
