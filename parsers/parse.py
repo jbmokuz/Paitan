@@ -70,6 +70,7 @@ class Yaku(Property):
                 for yaku, han in agari.yaku:
                     if yaku == self.name:
                         bing[agari.player] = 1
+        return bing
 
 class Pizza(Property):
     def __init__(self,pos):
