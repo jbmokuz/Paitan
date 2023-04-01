@@ -4,7 +4,7 @@ from flask_login import current_user, login_user, logout_user
 from app import app
 from app.forms import *
 from database import *
-from parsers.parse import CARD
+from parsers.parse import Properties, CARD
 
 import glob
 import os
@@ -281,7 +281,7 @@ def binghou(userName):
             binghouL.append(1)
         binghou = binghou >> 1
 
-    return render_template("binghou.html", binghou=binghouL, userName=userName, card=CARD)
+    return render_template("binghou.html", binghou=binghouL, userName=userName, card=CARDS)
 
 
 
@@ -303,10 +303,16 @@ def monopoly(userName):
     binghouL = []
 
     print(binghou)
-    for i in range(25):
+    for i in range(22):
         collect = 0 if binghou & 1 == 0 else 1
         binghou = binghou >> 1
-        binghouL.append([collect,CARD[i],CARD[i]])
+        if i < len(Properties):
+            print(i)
+            print(len(Properties))
+            print(Properties)
+            binghouL.append([collect,Properties[i].name,Properties[i].sub])
+        else:
+            binghouL.append([collect,"Nope","Nope"])
 
     return render_template('monopoly.html',board=binghouL, userName=userName)
 

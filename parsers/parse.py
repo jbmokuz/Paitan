@@ -133,7 +133,7 @@ class NEWS(Property):
 
     def score(self,game):
         bing = [0,0,0,0]
-        news = ["nw","ew","sw","2p"]
+        news = ["nw","ew","ww","sw"]
         for r in game.rounds:
             playerHands = [[],[],[],[]]
             for event in r.events:
@@ -148,7 +148,7 @@ class NEWS(Property):
         return bing
 
 
-Properties = [Pizza(0),Steal(1),TrainDelay(2),NEWS(3)]
+Properties = [Pizza(0),Steal(1),TrainDelay(2),Steal(3),Yaku("Riichi","riichi",4),NEWS(5),Yaku("Chanta","chanta",6),Yaku("Sanshoku","sanshoku",7),Yaku("Pinfu","pinfu",8),Yaku("Chiitoitsu","Chiitoitsu",9)]
 
 CARD = ["Honitsu", "Ura3", "Ikkitsuukan", ">50fu", "Haneman",
         "Nomi Gang", "Jikaze", "Ippatsu", "Tanyao", "Chinitsu",
