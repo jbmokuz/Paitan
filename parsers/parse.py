@@ -58,7 +58,6 @@ class Property:
     def score(game):
         return [0,0,0,0]
 
-
 class Yaku(Property):
     def __init__(self,_name,_sub,_pos):
         super().__init__(_name,_sub,_pos)
@@ -71,6 +70,7 @@ class Yaku(Property):
                     if yaku == self.name:
                         bing[agari.player] = 1
         return bing
+
 
 class Pizza(Property):
     def __init__(self,pos):
@@ -127,6 +127,45 @@ class TrainDelay(Property):
 
         return bing
 
+class NomiGang(Property):
+    def __init__(self,pos):
+        super().__init__("Nomi Gang", "Riichi, Haitei, Houtei, or Rinshan. Nomi only",pos)
+
+    def score(self,game):
+        bing = [0,0,0,0]
+        for r in game.rounds:
+            for agari in r.agari:
+                for yaku, han in agari.yaku:
+                    if (yaku == "Riichi" or yaku == "Haitei" or yaku == "Houtei" or yaku == "Rinshan") and sum([i[1] for i in agari.yaku]) == 1:
+                        bing[agari.player] = 1
+        return bing
+
+
+class SpecialTile(Property):
+    def __init__(self,special,pos):
+        self.special = special
+        super().__init__("Special Tile", f"Your winning tile is a {' or '.join(special)}",pos)
+
+    def score(self,game):
+        bing = [0,0,0,0]
+        for r in game.rounds:
+            for agari in r.agari:
+                if agari.machi[0].asdata()[:-1] in special:
+                    bing[agari.player] = 1
+        return bing
+
+class Fu(Property):
+    def __init__(self,pos):
+        super().__init__("Lots of fu!", "Win a hand with more then 60 fu",pos)
+
+    def score(self,game):
+        bing = [0,0,0,0]
+        for r in game.rounds:
+            for agari in r.agari:
+                if agari.fu > 60:
+                    bing[agari.player] = 1
+        return bing
+
 
 class NEWS(Property):
     def __init__(self,pos):
@@ -149,7 +188,53 @@ class NEWS(Property):
         return bing
 
 
-Properties = [Pizza(0),Steal(1),TrainDelay(2),Steal(3),Yaku("Riichi","riichi",4),NEWS(5),Yaku("Chanta","chanta",6),Yaku("Sanshoku","sanshoku",7),Yaku("Pinfu","pinfu",8),Yaku("Chiitoitsu","Chiitoitsu",9)]
+class Icecream(Property):
+    def __init__(self,pos):
+        super().__init__("Icecream!", "????",pos)
+
+    def score(self,game):
+        bing = [1,1,1,1]
+        return bing
+
+class ThreeMelds(Property):
+    def __init__(self,pos):
+        super().__init__("3 Melds", "Must have 3 open melds and not get Toitoi",pos)
+
+    def score(self,game):
+        for r in game.rounds:
+            for agari in r.agari:
+                for yaku, han in agari.yaku:
+                    if yaku == "Toitoi":
+                        continue
+                if len([meld for meld in agari.melds]) >= 3:
+                    bing[agari.player] = 1
+        return bing
+
+
+class Yakuman(Property):
+    def __init__(self,pos):
+        super().__init__("Get any Yakuman", "Good luck on this one!",pos)
+
+    def score(self,game):
+        for r in game.rounds:
+            for agari in r.agari:
+                if len(agari.yakuman) > 0:
+                    print("\n\nYAKUMAN!!!! {agari.player}\n\n")
+                    bing[agari.player] = 1
+        return bing
+
+
+
+Properties = [NEWS(0),NomiGang(1),
+              TrainDelay(2),Yaku("Ippatsu","Ippatsu!",3),Yaku("Uradora","Dora from riichi",4),
+              Steal(5),Yaku("Ikkitsuukan","123456789 in a row (same suit)!",6),Yaku("Riichi","riichi",7),
+              SpecialTile(["3s","nw"],8),Yaku("Chanta","All melds contain a 1,9 or honer",9),Yaku("Sanshoku","Same sequence meld in 3 suits",10),
+              Fu(11),Yaku("Pinfu","pinfu, its that one where you need sequence melds",12),Yaku("Chiitoitsu","7 pairs",13),
+              Icecream(14),Yaku("Jikaze","Round or seat wind",15),Yaku("Yakuhai","Dragon",16),
+              ThreeMelds(17),Yaku("Iipeikou","Same sequence meld twice",18),Yaku("Toitoi","All 3 of a kind melds",19),
+              Yakuman(20),Yaku("Tanyao","All simples",21)]
+
+    
 
 CARD = ["Honitsu", "Ura3", "Ikkitsuukan", ">50fu", "Haneman",
         "Nomi Gang", "Jikaze", "Ippatsu", "Tanyao", "Chinitsu",
