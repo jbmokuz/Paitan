@@ -1,0 +1,25 @@
+<!doctype html>
+
+{% macro property(color, prop) -%}
+    <div class="name"> {{ prop[1] }}
+    {% if  prop[0] == 1 %}
+    <i class="drawing fa fa-check" style="color:green"></i>
+    {% else %}
+    {% endif %}
+    </div>
+{%- endmacro %}
+
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+	</head>
+	<body>
+	  {{userName}}
+	  {{prop}}
+	  {% for prop in board %}
+	  {{ property("light-blue",prop) }}
+	  {% endfor %}
+	</body>
+</html>

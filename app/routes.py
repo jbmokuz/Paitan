@@ -317,6 +317,40 @@ def monopoly(userName):
     return render_template('monopoly.html',board=binghouL, userName=userName)
 
 
+
+
+@app.route("/monopoly_simple/<path:userName>", methods=['GET'])
+def monopolySimple(userName):
+    binghou = 0
+
+    for game in getGamesForUser(userName):
+        print(game)
+        if game.ton == userName:
+            binghou = binghou | game.ton_binghou
+        if game.nan == userName:
+            binghou = game.nan_binghou | binghou
+        if game.xia == userName:
+            binghou = game.xia_binghou | binghou
+        if game.pei == userName:
+            binghou = game.pei_binghou | binghou
+
+    binghouL = []
+
+    print(binghou)
+    for i in range(22):
+        collect = 0 if binghou & 1 == 0 else 1
+        binghou = binghou >> 1
+        if i < len(Properties):
+            print(i)
+            print(len(Properties))
+            print(Properties)
+            binghouL.append([collect,Properties[i].name,Properties[i].sub])
+        else:
+            binghouL.append([collect,"Nope","Nope"])
+
+    return render_template('monopoly_simple.html',board=binghouL, userName=userName)
+
+
 """
 @app.route("/tourney", methods=['GET'])
 def tourney():
