@@ -223,14 +223,17 @@ class Yakuman(Property):
         return bing
 
 
-
+              # Riichi nomi specials
 Properties = [NEWS(0),NomiGang(1),
+              # Riichi!
               TrainDelay(2),Yaku("Ippatsu","Ippatsu!",3),Yaku("Uradora","Dora from riichi",4),
               Steal(5),Yaku("Ikkitsuukan","123456789 in a row (same suit)!",6),Yaku("Riichi","riichi",7),
-              SpecialTile(["3s","nw"],8),Yaku("Chanta","All melds contain a 1,9 or honer",9),Yaku("Sanshoku","Same sequence meld in 3 suits",10),
+              SpecialTile(["3s","nw"],8),Yaku("Chanta","All melds contain a 1,9 or honer",9),Yaku("Iipeikou","Same sequence meld twice",10),
+              # FU
               Fu(11),Yaku("Pinfu","pinfu, its that one where you need sequence melds",12),Yaku("Chiitoitsu","7 pairs",13),
               Icecream(14),Yaku("Jikaze","Round or seat wind",15),Yaku("Yakuhai","Dragon",16),
-              ThreeMelds(17),Yaku("Iipeikou","Same sequence meld twice",18),Yaku("Toitoi","All 3 of a kind melds",19),
+              # Threes!
+              ThreeMelds(17),Yaku("Sanshoku","Same sequence meld in 3 suits",18),Yaku("Toitoi","All 3 of a kind melds",19),
               Yakuman(20),Yaku("Tanyao","All simples",21)]
 
     
