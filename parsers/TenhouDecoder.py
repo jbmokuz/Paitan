@@ -354,10 +354,10 @@ class Game(Data):
             self.owari = data['owari']
 
     def tagREACH(self, tag, data):
-        if 'ten' in data:
-            player = int(data['who'])
-            self.round.reaches.append(player)
-            self.round.reach_turns.append(self.round.turns[player])
+        #if 'ten' in data:
+        player = int(data['who'])
+        self.round.reaches.append(player)
+        self.round.reach_turns.append(self.round.turns[player])
 
     @staticmethod
     def default(obj, tag, data):

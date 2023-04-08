@@ -101,11 +101,8 @@ class Steal(Property):
                         if (losePlayer in r.reaches):
                             reachPos = r.reaches.index(losePlayer)
                             reachTurn = r.reach_turns[reachPos]
-                            print(reachPos)
-                            print(reachTurn)
-                            print(r.turns[losePlayer])
-                            print("="*12)
                             if reachTurn == r.turns[losePlayer]:
+                                print("WE GOT TSUBAME!")
                                 bing[agari.player] = 1
         return bing
 
@@ -144,13 +141,13 @@ class NomiGang(Property):
 class SpecialTile(Property):
     def __init__(self,special,pos):
         self.special = special
-        super().__init__("Special Tile", f"Your winning tile is a {' or '.join(special)}",pos)
+        super().__init__("Special Tile", f"Your winning tile is a {' or '.join(self.special)}",pos)
 
     def score(self,game):
         bing = [0,0,0,0]
         for r in game.rounds:
             for agari in r.agari:
-                if agari.machi[0].asdata()[:-1] in special:
+                if agari.machi[0].asdata()[:-1] in self.special:
                     bing[agari.player] = 1
         return bing
 
@@ -201,6 +198,7 @@ class ThreeMelds(Property):
         super().__init__("3 Melds", "Must have 3 open melds and not get Toitoi",pos)
 
     def score(self,game):
+        bing = [0,0,0,0]
         for r in game.rounds:
             for agari in r.agari:
                 for yaku, han in agari.yaku:
@@ -216,10 +214,11 @@ class Yakuman(Property):
         super().__init__("Get any Yakuman", "Good luck on this one!",pos)
 
     def score(self,game):
+        bing = [0,0,0,0]
         for r in game.rounds:
             for agari in r.agari:
                 if len(agari.yakuman) > 0:
-                    print("\n\nYAKUMAN!!!! {agari.player}\n\n")
+                    print(f"\n\nYAKUMAN!!!! {agari.player}\n\n")
                     bing[agari.player] = 1
         return bing
 
@@ -383,7 +382,6 @@ def parseTenhou(log):
     ret = []
 
     print("BING", [intToYaku(i) for i in binghou])
-
     for i in range(len(names)):
         ret.append(TablePlayer(names[i], int(scores[i]), 0, int(shugi[i]), binghou[i], kans[i]))
 
