@@ -1,29 +1,48 @@
 <!doctype html>
 
 {% macro property(color, prop) -%}
-    <div class="name"> {{ prop[1] }}
+
+<div class="name">
     {% if  prop[0] == 1 %}
-    <i class="drawing fa fa-check" style="color:green"></i>
+    <i class="drawing fa fa-check-square-o" style="color:green"></i>
     {% else %}
+        <i class="drawing fa fa-square-o" style="color:black"></i>
     {% endif %}
+    <b> {{ prop[1] }}</b> -  {{ prop[2] }}
     </div>
 {%- endmacro %}
 
 <html>
-	<head>
+    <style>
+h3 {
+  background-color: white;
+  width: 500px;
+  border: 10px solid black;
+  padding: 10px;
+margin: 20px;
+font-weight: normal;
+}
+</style>
+
 		<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 	</head>
 	<body>
-	  {{userName}}
+	  <h1>{{userName}}<h1>
 	  <hr>
-	  {{prop}}
+	  <h2> Riichi Nomi Specials! </h2>
+	  <h3>
+	  {% set headers = {3:"Trains",6:"???",9:"IDK",12:"Fight for fu!",15:"Hicecream!",18:"3 is the way to be!",21:"Lunatic"} %}
 	  {% for prop in board %}
 	  {% if loop.index in [3,6,9,12,15,18,21] %}
+	  </h3>
 	  <hr>
+	  <h2>{{headers[loop.index]}}</h2>
+	  <h3>
 	  {% endif %}
 	  {{ property("light-blue",prop) }}
 	  {% endfor %}
+	  </h3>
 	</body>
 </html>
