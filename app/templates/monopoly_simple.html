@@ -17,8 +17,12 @@
 	</head>
 	<body>
 	  {{userName}}
+	  <hr>
 	  {{prop}}
 	  {% for prop in board %}
+	  {% if loop.index in [3,6,9,12,15,18,21] %}
+	  <hr>
+	  {% endif %}
 	  {{ property("light-blue",prop) }}
 	  {% endfor %}
 	</body>

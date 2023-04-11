@@ -67,7 +67,7 @@ class Yaku(Property):
         for r in game.rounds:
             for agari in r.agari:
                 for yaku, han in agari.yaku:
-                    if yaku == self.name:
+                    if yaku.split(" ")[0] == self.name:
                         bing[agari.player] = 1
         return bing
 
@@ -119,7 +119,7 @@ class TrainDelay(Property):
                         winPlayerTurn = r.turns[agari.player]
                         reachPos = r.reaches.index(agari.player)
                         reachTurn = r.reach_turns[reachPos]
-                        if (winPlayerTurn - reachTurn > 6):
+                        if (winPlayerTurn - reachTurn >= 5):
                             bing[agari.player] = 1
 
         return bing
