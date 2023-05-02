@@ -339,6 +339,90 @@ def formatStandings(ordered):
     ret += "```"
     return ret
 
+@bot.command()
+async def start(ctx, p1=None, p2=None, p3=None, p4=None):
+    """
+    Start Tenhou Game
+    Args:
+        player1 player2 player3 player4 randomSeating=[true/false]
+    """
+
+    player, chan, club = await get_vars(ctx)
+
+    await chan.send("```"+startGame(p1,p2,p3,p4,club.tenhou_rules,club.tenhou_room)+"```")
+
+def startGame(p1,p2,p3,p4,roomRules,room,heading=True):
+    if (p1 == None or p2 == None or p3 == None): #or p4 == None):
+        return f"Please specify 4 players space separated"
+    else:
+        player_names = [p1, p2, p3]#, p4]
+
+    
+    print(f"Starting, Admin:{room} Rules:{roomRules}")
+
+    rules = []
+
+    rulez = int(roomRules,16)
+
+    if rulez % 2:
+        rules.append("Aka Ari")
+    else:
+        rules.append("Aka Nashi")
+
+    if rulez % 4:
+        rules.append("Kuitan Ari")
+    else:
+        rule.append("Kuitan Nashi")
+
+    if rulez % 8:
+        rules.append("Hanchan")
+    else:
+        rules.append("Tonpu")
+
+    if rulez & 0x200 or rulez & 0x400:
+        rules.append("Shugi Ari")
+    else:
+        rules.append("Shugi Nashi")
+            
+    ret = ""
+
+    if heading:
+        ret += "Starting: " + " | ".join(rules)+"\n"
+
+    data = {
+        "L": room,
+        "R2": roomRules,
+        "RND": "default",
+        "WG": "1",
+        "PW": ""
+    }
+
+    headers = {
+        "Host": "tenhou.net",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0"
+        
+    }
+
+    randomSeat = "true"
+    if randomSeat.lower() != "false" and randomSeat.lower() != "no":
+        random.shuffle(player_names)
+        # data["RANDOMSTART"] = "on"
+
+    data["M"] = "\r\n".join(player_names)
+
+    print("sending")
+    resp = requests.post('https://tenhou.net/cs/edit/cmd_start.cgi', data=data, headers=headers)
+    print(resp)
+    #resp = requests.post('https://tenhou.net/cs/edit/cmd_start.cgi', data={"L":room})
+    #print(resp)
+    if resp.status_code != 200:
+        return f"http error {resp.status_code} :<"
+
+    return ret + urllib.parse.unquote(resp.text)
+
+
+
+
 @bot.command(aliases=['p'])
 async def ping(ctx):
     """
