@@ -126,7 +126,7 @@ class TrainDelay(Property):
 
 class NomiGang(Property):
     def __init__(self,pos):
-        super().__init__("Nomi Gang", "Riichi, Haitei, Houtei, or Rinshan. Nomi only",pos)
+        super().__init__("Nomi Gang", "Riichi, Haitei, Houtei, or Rinshan Nomi.",pos)
 
     def score(self,game):
         bing = [0,0,0,0]
@@ -178,8 +178,6 @@ class NEWS(Property):
                     player = event.player
                     playerHands[player].append(event.tile.asdata()[:2])
                     if len(playerHands[player]) == 4:
-                        print("HAND!")
-                        print(playerHands[player])
                         if playerHands[player] == news:
                             bing[player] = 1
         return bing
@@ -187,11 +185,20 @@ class NEWS(Property):
 
 class Icecream(Property):
     def __init__(self,pos):
-        super().__init__("Icecream!", "????",pos)
+        super().__init__("Icecream!", "Mint chocolate chip",pos)
 
     def score(self,game):
-        bing = [1,1,1,1]
-        return bing
+            bing = [0,0,0,0]
+            green = ["2s","3s","4s","6s","8s","gd"]
+            for r in game.rounds:
+                for agari in r.agari:
+                    count = 0
+                    for tile in [i.asdata()[:2] for i in agari.hand]:
+                        if tile in green:
+                            count += 1
+                    if count > 6:
+                        bing[agari.player] = 1
+            return bing
 
 class ThreeMelds(Property):
     def __init__(self,pos):
@@ -224,17 +231,17 @@ class Yakuman(Property):
 
 
               # Riichi nomi specials
-Properties = [NEWS(0),NomiGang(1),
+Properties = [NomiGang(0),SpecialTile(["7p","gd"],1),
               # Riichi!
-              TrainDelay(2),Yaku("Ippatsu","Ippatsu!",3),Yaku("Uradora","Dora from riichi",4),
-              Steal(5),Yaku("Ikkitsuukan","123456789 in a row (same suit)!",6),Yaku("Riichi","riichi",7),
-              SpecialTile(["3s","nw"],8),Yaku("Chanta","All melds contain a 1,9 or honer",9),Yaku("Iipeikou","Same sequence meld twice",10),
+              Yaku("Tanyao","All simples",2),Yaku("Ippatsu","Ippatsu!",3),Yaku("Uradora","Dora from riichi",4),
+              NEWS(5),Steal(6),TrainDelay(7),
+              Yaku("Ikkitsuukan","123456789 in a row (same suit)!",8),Yaku("Chanta","All melds contain a 1,9 or honer",9),Yaku("Iipeikou","Same sequence meld twice",10),
               # FU
               Fu(11),Yaku("Pinfu","pinfu, its that one where you need sequence melds",12),Yaku("Chiitoitsu","7 pairs",13),
               Icecream(14),Yaku("Jikaze","Round or seat wind",15),Yaku("Yakuhai","Dragon",16),
               # Threes!
               ThreeMelds(17),Yaku("Sanshoku","Same sequence meld in 3 suits",18),Yaku("Toitoi","All 3 of a kind melds",19),
-              Yakuman(20),Yaku("Tanyao","All simples",21)]
+              Yakuman(20),Yaku("Riichi","riichi",21)]
 
     
 

@@ -246,8 +246,6 @@ def club_standings(clubId):
     gamesRaw = getGamesForClub(clubId)
     games = {}
 
-    print(gamesRaw)
-
     for game in gamesRaw:
         if not game.round_number in games:
             games[game.round_number] = []
@@ -349,7 +347,6 @@ def monopolySimple(userName):
             binghouL.append([collect,"Nope","Nope"])
 
     return render_template('monopoly_simple.html',board=binghouL, userName=userName)
-
 
 """
 @app.route("/tourney", methods=['GET'])

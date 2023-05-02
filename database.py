@@ -586,7 +586,23 @@ def startNextRound(tourneyId, roundNumber=None):
     tourney.current_round = tourney.current_round + 1
     return tourney.current_round
 
-
+def getScoreCount(i):
+    count = 1
+    loop = 1
+    ret = 0
+    while i != 0:
+        if loop == 0:
+            count = 0
+        if i & 1 == 1:
+            ret += 1
+            count += 1
+        else:
+            count = 0
+        if count == 3:
+            ret += 3
+        loop = (loop + 1)%3
+        i = i >> 1
+    return ret
 
 def getStandings(clubId,isClub=True,binghou=False):
 
@@ -602,7 +618,7 @@ def getStandings(clubId,isClub=True,binghou=False):
             if not g.ton in rank:
                 rank[g.ton] = 0
             if (binghou):
-                rank[g.ton] += g.ton_kan
+                rank[g.ton] = getScoreCount(g.ton_binghou)
             else:
                 rank[g.ton] += g.ton_payout
 
@@ -610,7 +626,7 @@ def getStandings(clubId,isClub=True,binghou=False):
             if not g.nan in rank:
                 rank[g.nan] = 0
             if (binghou):
-                rank[g.nan] += g.nan_kan
+                rank[g.nan] += getScoreCount(g.nan_binghou)
             else:
                 rank[g.nan] += g.nan_payout
 
@@ -618,7 +634,7 @@ def getStandings(clubId,isClub=True,binghou=False):
             if not g.xia in rank:
                 rank[g.xia] = 0
             if (binghou):
-                rank[g.xia] += g.xia_kan
+                rank[g.xia] += getScoreCount(g.xia_binghou)
             else:
                 rank[g.xia] += g.xia_payout
 
@@ -626,7 +642,7 @@ def getStandings(clubId,isClub=True,binghou=False):
             if not g.pei in rank:
                 rank[g.pei] = 0
             if (binghou):
-                rank[g.pei] += g.pei_kan
+                rank[g.pei] += getScoreCount(g.pei_binghou)
             else:
                 rank[g.pei] += g.pei_payout
 
