@@ -184,7 +184,6 @@ async def shuffle(ctx):
     """
     player, chan, club = await get_vars(ctx)
     idle, play = getLobby(club)
-    idle += [str(i)+"san" for i in range(6)]
     
     if idle == ['']:
         idle = []
@@ -193,8 +192,6 @@ async def shuffle(ctx):
         return
 
     def check(tables):
-        import pdb
-        pdb.set_trace()
         for t in tables:
             if [i.lower()[:4] for i in t].count("moku") > 1:
                 return False
