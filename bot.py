@@ -40,86 +40,86 @@ async def get_vars(ctx):
 
 ################ TEMP FUNCTIONS  #######################
 
-class AnyNumber():
-    def __init__(self, major, majorPrice, minor, minorPrice, pig, pigPrice):
-        self.major = major
-        self.majorPrice = majorPrice
-        self.minor = minor
-        self.minorPrice = minorPrice
-        self.pig = pig
-        self.pigPrice = pigPrice
-        self.numbers = [str(i) for i in range(0,10)]
+# class AnyNumber():
+#     def __init__(self, major, majorPrice, minor, minorPrice, pig, pigPrice):
+#         self.major = major
+#         self.majorPrice = majorPrice
+#         self.minor = minor
+#         self.minorPrice = minorPrice
+#         self.pig = pig
+#         self.pigPrice = pigPrice
+#         self.numbers = [str(i) for i in range(0,10)]
 
-    def __str__(self):
-        tmpMajor = self.majorPrice
-        tmpMinor = self.minorPrice
-        tmpPig = self.pigPrice
-        for n in self.numbers:
-            n = str(n)
-            tmpMajor = tmpMajor.replace(n,"*")
-            tmpMinor = tmpMinor.replace(n,"*")
-            tmpPig = tmpPig.replace(n,"*")            
+#     def __str__(self):
+#         tmpMajor = self.majorPrice
+#         tmpMinor = self.minorPrice
+#         tmpPig = self.pigPrice
+#         for n in self.numbers:
+#             n = str(n)
+#             tmpMajor = tmpMajor.replace(n,"*")
+#             tmpMinor = tmpMinor.replace(n,"*")
+#             tmpPig = tmpPig.replace(n,"*")            
         
-        return f"```Numbers: {[i for i in self.numbers]}\n¥ {tmpMajor} 0 0  {self.major}\n¥   {tmpMinor} 0 0  {self.minor}\n¥       {tmpPig}  {self.pig}```"
+#         return f"```Numbers: {[i for i in self.numbers]}\n¥ {tmpMajor} 0 0  {self.major}\n¥   {tmpMinor} 0 0  {self.minor}\n¥       {tmpPig}  {self.pig}```"
 
 
-    def pick(self,numb):
-        if numb in self.numbers:
-            self.numbers.remove(numb)
-            return 0
-        return 1
+#     def pick(self,numb):
+#         if numb in self.numbers:
+#             self.numbers.remove(numb)
+#             return 0
+#         return 1
 
-@bot.command()
-@has_permissions(administrator=True)
-async def anyNumber(ctx):
-    """
-    ??????
-    """
-    global ANYNUMBER
-    ANYNUMBER = AnyNumber("AMOS REXX II (2 points)","7 4 8 0","Nichijyou DVD Boxset (1 point)","2 9 5","Pig (0 points)","6 3 1")
-    player = ctx.author
-    chan = ctx.channel
-    await chan.send(ANYNUMBER)
+# @bot.command()
+# @has_permissions(administrator=True)
+# async def anyNumber(ctx):
+#     """
+#     ??????
+#     """
+#     global ANYNUMBER
+#     ANYNUMBER = AnyNumber("AMOS REXX II (2 points)","7 4 8 0","Nichijyou DVD Boxset (1 point)","2 9 5","Pig (0 points)","6 3 1")
+#     player = ctx.author
+#     chan = ctx.channel
+#     await chan.send(ANYNUMBER)
 
-@bot.command()
-@has_permissions(administrator=True)
-async def pick(ctx, numb):
-    """
-    ??????
-    """
-    global ANYNUMBER
-    ret = ANYNUMBER.pick(numb)
-    player = ctx.author
-    chan = ctx.channel
-    if ret == 1:
-        await chan.send("You already picked that number!")    
-    await chan.send(ANYNUMBER)
-
-
-@bot.command()
-@has_permissions(administrator=True)
-async def pickAll(ctx):
-    """
-    ??????
-    """
-    global ANYNUMBER
-    for i in range(10):
-        ret = ANYNUMBER.pick(str(i))
-    player = ctx.author
-    chan = ctx.channel
-    await chan.send(ANYNUMBER)
+# @bot.command()
+# @has_permissions(administrator=True)
+# async def pick(ctx, numb):
+#     """
+#     ??????
+#     """
+#     global ANYNUMBER
+#     ret = ANYNUMBER.pick(numb)
+#     player = ctx.author
+#     chan = ctx.channel
+#     if ret == 1:
+#         await chan.send("You already picked that number!")    
+#     await chan.send(ANYNUMBER)
 
 
-@bot.command()
-async def roll(ctx, dice=2):
-    """
-    roll dice
-    """
-    player, chan, club = await get_vars(ctx)
-    rolls = []
-    for i in range(dice):
-        rolls.append(random.randint(1,6))
-    await chan.send(f"{rolls}\n{sum(rolls)}")
+# @bot.command()
+# @has_permissions(administrator=True)
+# async def pickAll(ctx):
+#     """
+#     ??????
+#     """
+#     global ANYNUMBER
+#     for i in range(10):
+#         ret = ANYNUMBER.pick(str(i))
+#     player = ctx.author
+#     chan = ctx.channel
+#     await chan.send(ANYNUMBER)
+
+
+# @bot.command()
+# async def roll(ctx, dice=2):
+#     """
+#     roll dice
+#     """
+#     player, chan, club = await get_vars(ctx)
+#     rolls = []
+#     for i in range(dice):
+#         rolls.append(random.randint(1,6))
+#     await chan.send(f"{rolls}\n{sum(rolls)}")
 
 
 #################
