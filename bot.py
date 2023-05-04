@@ -238,7 +238,7 @@ async def shuffle(ctx):
 @bot.command()
 async def list(ctx):
     """
-    Join current tourney
+    Show lobby information
     """
     
     player, chan, club = await get_vars(ctx)
