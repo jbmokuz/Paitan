@@ -184,6 +184,36 @@ async def shuffle(ctx):
     """
     player, chan, club = await get_vars(ctx)
     idle, play = getLobby(club)
+    idle += [str(i)+"san" for i in range(6)]
+    
+    if idle == ['']:
+        idle = []
+    if len(idle) < 4:
+        await chan.send(f"There are only {len(idle)} players. We need at least 4")
+        return
+
+    def check(tables):
+        import pdb
+        pdb.set_trace()
+        for t in tables:
+            if [i.lower()[:4] for i in t].count("moku") > 1:
+                return False
+        return True
+
+    # @TODO just prepopulate each of the first X tables with a moku and do it that way
+    for i in range(128):
+        random.shuffle(idle)
+        tables = [[u for u in idle[i:i + 4]] for i in range(0, len(idle), 4)]        
+        if check(tables):
+            break
+
+    ret = ""
+    for i,t in enumerate(tables):
+        ret += f"**Table {i+1}:** "
+        ret += str(" ".join(t))
+        ret += "\n"
+    await chan.send(ret)
+
     
     """
     users = [i for i in tourneyList.items()]
