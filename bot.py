@@ -6,6 +6,7 @@ import urllib
 import requests
 import sys
 from discord.ext import commands
+from discord.ext.commands import has_permissions, MissingPermissions
 #import discord
 
 from database import *
@@ -37,6 +38,78 @@ async def get_vars(ctx):
 
 # id=119046709983707136 name='moku' discriminator='9015'
 
+################ TEMP FUNCTIONS  #######################
+
+class AnyNumber():
+    def __init__(self, major, majorPrice, minor, minorPrice, pig, pigPrice):
+        self.major = major
+        self.majorPrice = majorPrice
+        self.minor = minor
+        self.minorPrice = minorPrice
+        self.pig = pig
+        self.pigPrice = pigPrice
+        self.numbers = [str(i) for i in range(0,10)]
+
+    def __str__(self):
+        tmpMajor = self.majorPrice
+        tmpMinor = self.minorPrice
+        tmpPig = self.pigPrice
+        for n in self.numbers:
+            n = str(n)
+            tmpMajor = tmpMajor.replace(n,"*")
+            tmpMinor = tmpMinor.replace(n,"*")
+            tmpPig = tmpPig.replace(n,"*")            
+        
+        return f"```Numbers: {[i for i in self.numbers]}\n¥ {tmpMajor} 0 0  {self.major}\n¥   {tmpMinor} 0 0  {self.minor}\n¥       {tmpPig}  {self.pig}```"
+
+
+    def pick(self,numb):
+        if numb in self.numbers:
+            self.numbers.remove(numb)
+            return 0
+        return 1
+
+@bot.command()
+@has_permissions(administrator=True)
+async def anyNumber(ctx):
+    """
+    ??????
+    """
+    global ANYNUMBER
+    ANYNUMBER = AnyNumber("AMOS REXX II (2 points)","7 4 8 0","Nichijyou DVD Boxset (1 point)","2 9 5","Pig (0 points)","6 3 1")
+    player = ctx.author
+    chan = ctx.channel
+    await chan.send(ANYNUMBER)
+
+@bot.command()
+@has_permissions(administrator=True)
+async def pick(ctx, numb):
+    """
+    ??????
+    """
+    global ANYNUMBER
+    ret = ANYNUMBER.pick(numb)
+    player = ctx.author
+    chan = ctx.channel
+    if ret == 1:
+        await chan.send("You already picked that number!")    
+    await chan.send(ANYNUMBER)
+
+
+@bot.command()
+@has_permissions(administrator=True)
+async def pickAll(ctx):
+    """
+    ??????
+    """
+    global ANYNUMBER
+    for i in range(10):
+        ret = ANYNUMBER.pick(str(i))
+    player = ctx.author
+    chan = ctx.channel
+    await chan.send(ANYNUMBER)
+
+
 @bot.command()
 async def roll(ctx, dice=2):
     """
@@ -50,6 +123,108 @@ async def roll(ctx, dice=2):
 
 
 #################
+
+
+tourneyList = {str(i):str(i)+"san" for i in range(18)}
+tourneyList["マージャン"] = "麻雀"
+
+@bot.command()
+async def join(ctx):
+    """
+    Join current tourney
+    """
+    player, chan, club = await get_vars(ctx)
+    user = getUser(player.id)
+
+    if user.tenhou_name == None or user.tenhou_name == "":
+        await chan.send("Please set your tenhou name with $set_name. You are not added")
+        return
+
+    tourneyList[user.user_name] = user.tenhou_name
+    await chan.send("Added! That makes "+str(len(tourneyList)))
+
+
+@bot.command()
+async def leave(ctx):
+    """
+    Join current tourney
+    """
+    player, chan, club = await get_vars(ctx)
+    if not user.user_name in tourneyList:
+        await chan.send(f"Error, {user.user_name} not currently in the tournament") 
+        return
+    tournetList.pop(user.user_name)
+    
+    await chan.send("Removed! That makes "+len(tourneyList))
+
+
+@bot.command()
+async def shuffle(ctx):
+    """
+    Shuffle for list for tables
+    """
+    player, chan, club = await get_vars(ctx)
+
+    users = [i for i in tourneyList.items()]
+    subs = [("Moku","moku"),("Moku","Mokuzz"),("Moku","Moku")]
+    subs = subs[:len(users)%4]
+    def check(users):
+        tables = [[u[0] for u in users[i:i + 4]] for i in range(0, len(users), 4)]
+        if tables.count("Moku") > 1:
+            return False
+        return True
+
+    random.shuffle(users)
+    while not check(users):
+            random.shuffle(users)
+    
+    tables = [[u[1] for u in users[i:i + 4]] for i in range(0, len(users), 4)]
+    ret = ""
+    for t in tables:
+        ret += str(" ".join(t))
+        ret += "\n"
+    await chan.send(ret)
+
+@bot.command()
+async def list(ctx):
+    """
+    Join current tourney
+    """
+    player, chan, club = await get_vars(ctx)
+    headers = {
+        "Host": "tenhou.net",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0"
+    }
+    ret = requests.post("https://tenhou.net/cs/edit/cmd_get_players.cgi",data = {"L":club.tenhou_room}, headers=headers)
+
+    if ret.status_code != 200:
+        await chan.send("Could not get list :<")
+    ret = ret.text
+
+    idle = urllib.parse.unquote(ret.split("&")[0][5:]).split(",")
+    play = urllib.parse.unquote(ret.split("&")[1][5:]).split(",")
+        
+    print(idle, play)
+
+    ret = "```In Queue:\n\n"
+    if idle == ['']:
+        ret += "No users are waiting\n"
+    else:
+        for u in idle:
+            ret += " (" + u + ")"
+            ret += "\n"    
+    ret += "```\n"
+    ret += "```In Playing:\n\n"
+    if play == ['']:
+        ret += "No users are playing\n"
+    else:
+        for p in play:
+            ret += " (" + p + ")"
+            ret += "\n"    
+    ret += "```"
+    await chan.send(ret)
+
+    
 
 @bot.command()
 async def change_pass(ctx):
@@ -388,7 +563,7 @@ def startGame(p1,p2,p3,p4,roomRules,room,heading=True):
 
     if heading:
         ret += "Starting: " + " | ".join(rules)+"\n"
-
+    print(roomRules)
     data = {
         "L": room,
         "R2": roomRules,
@@ -400,7 +575,6 @@ def startGame(p1,p2,p3,p4,roomRules,room,heading=True):
     headers = {
         "Host": "tenhou.net",
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0"
-        
     }
 
     randomSeat = "true"
