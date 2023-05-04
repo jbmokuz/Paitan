@@ -618,7 +618,7 @@ def getStandings(clubId,isClub=True,binghou=False):
             if not g.ton in rank:
                 rank[g.ton] = 0
             if (binghou):
-                rank[g.ton] = getScoreCount(g.ton_binghou)
+                rank[g.ton] |= g.ton_binghou
             else:
                 rank[g.ton] += g.ton_payout
 
@@ -626,7 +626,7 @@ def getStandings(clubId,isClub=True,binghou=False):
             if not g.nan in rank:
                 rank[g.nan] = 0
             if (binghou):
-                rank[g.nan] += getScoreCount(g.nan_binghou)
+                rank[g.nan] |= g.nan_binghou
             else:
                 rank[g.nan] += g.nan_payout
 
@@ -634,7 +634,7 @@ def getStandings(clubId,isClub=True,binghou=False):
             if not g.xia in rank:
                 rank[g.xia] = 0
             if (binghou):
-                rank[g.xia] += getScoreCount(g.xia_binghou)
+                rank[g.xia] |= g.xia_binghou
             else:
                 rank[g.xia] += g.xia_payout
 
@@ -642,17 +642,15 @@ def getStandings(clubId,isClub=True,binghou=False):
             if not g.pei in rank:
                 rank[g.pei] = 0
             if (binghou):
-                rank[g.pei] += getScoreCount(g.pei_binghou)
+                rank[g.pei] |= g.pei_binghou
             else:
                 rank[g.pei] += g.pei_payout
 
 
     ordered = []
-
     for n in rank:
-        ordered.append([rank[n],n])
+        ordered.append([getScoreCount(rank[n]),n])
     ordered.sort(key=lambda x:x[0], reverse=True)
-
     return ordered
 
 
