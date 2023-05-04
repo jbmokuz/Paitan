@@ -128,34 +128,53 @@ async def roll(ctx, dice=2):
 tourneyList = {str(i):str(i)+"san" for i in range(18)}
 tourneyList["マージャン"] = "麻雀"
 
-@bot.command()
-async def join(ctx):
-    """
-    Join current tourney
-    """
-    player, chan, club = await get_vars(ctx)
-    user = getUser(player.id)
+# @bot.command()
+# async def join(ctx):
+#     """
+#     Join current tourney
+#     """
+#     player, chan, club = await get_vars(ctx)
+#     user = getUser(player.id)
 
-    if user.tenhou_name == None or user.tenhou_name == "":
-        await chan.send("Please set your tenhou name with $set_name. You are not added")
-        return
+#     if user.tenhou_name == None or user.tenhou_name == "":
+#         await chan.send("Please set your tenhou name with $set_name. You are not added")
+#         return
 
-    tourneyList[user.user_name] = user.tenhou_name
-    await chan.send("Added! That makes "+str(len(tourneyList)))
+#     tourneyList[user.user_name] = user.tenhou_name
+#     await chan.send("Added! That makes "+str(len(tourneyList)))
 
 
-@bot.command()
-async def leave(ctx):
-    """
-    Join current tourney
-    """
-    player, chan, club = await get_vars(ctx)
-    if not user.user_name in tourneyList:
-        await chan.send(f"Error, {user.user_name} not currently in the tournament") 
-        return
-    tournetList.pop(user.user_name)
+# @bot.command()
+# async def leave(ctx):
+#     """
+#     Join current tourney
+#     """
+#     player, chan, club = await get_vars(ctx)
+#     if not user.user_name in tourneyList:
+#         await chan.send(f"Error, {user.user_name} not currently in the tournament") 
+#         return
+#     tournetList.pop(user.user_name)
     
-    await chan.send("Removed! That makes "+len(tourneyList))
+#     await chan.send("Removed! That makes "+len(tourneyList))
+
+
+def getLobby(club):
+    headers = {
+        "Host": "tenhou.net",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0"
+    }
+    ret = requests.post("https://tenhou.net/cs/edit/cmd_get_players.cgi",data = {"L":club.tenhou_room}, headers=headers)
+
+    if ret.status_code != 200:
+        print("COULD NOT GET LOBBY!")
+        return ["",""]
+    ret = ret.text
+
+    idle = urllib.parse.unquote(ret.split("&")[0][5:]).split(",")
+    play = urllib.parse.unquote(ret.split("&")[1][5:]).split(",")
+        
+    return (idle, play)
+
 
 
 @bot.command()
@@ -164,7 +183,8 @@ async def shuffle(ctx):
     Shuffle for list for tables
     """
     player, chan, club = await get_vars(ctx)
-
+    
+    """
     users = [i for i in tourneyList.items()]
     subs = [("Moku","moku"),("Moku","Mokuzz"),("Moku","Moku")]
     subs = subs[:len(users)%4]
@@ -184,27 +204,30 @@ async def shuffle(ctx):
         ret += str(" ".join(t))
         ret += "\n"
     await chan.send(ret)
+    """
 
+    
 @bot.command()
 async def list(ctx):
     """
     Join current tourney
     """
+    
     player, chan, club = await get_vars(ctx)
-    headers = {
-        "Host": "tenhou.net",
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0"
-    }
-    ret = requests.post("https://tenhou.net/cs/edit/cmd_get_players.cgi",data = {"L":club.tenhou_room}, headers=headers)
+    # headers = {
+    #     "Host": "tenhou.net",
+    #     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0"
+    # }
+    # ret = requests.post("https://tenhou.net/cs/edit/cmd_get_players.cgi",data = {"L":club.tenhou_room}, headers=headers)
 
-    if ret.status_code != 200:
-        await chan.send("Could not get list :<")
-    ret = ret.text
+    # if ret.status_code != 200:
+    #     await chan.send("Could not get list :<")
+    # ret = ret.text
 
-    idle = urllib.parse.unquote(ret.split("&")[0][5:]).split(",")
-    play = urllib.parse.unquote(ret.split("&")[1][5:]).split(",")
+    # idle = urllib.parse.unquote(ret.split("&")[0][5:]).split(",")
+    # play = urllib.parse.unquote(ret.split("&")[1][5:]).split(",")
         
-    print(idle, play)
+    idle, play = getLobby(club)
 
     ret = "```In Queue:\n\n"
     if idle == ['']:
