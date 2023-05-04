@@ -167,7 +167,7 @@ def getLobby(club):
 
     if ret.status_code != 200:
         print("COULD NOT GET LOBBY!")
-        return ["",""]
+        return [[],[]]
     ret = ret.text
 
     idle = urllib.parse.unquote(ret.split("&")[0][5:]).split(",")
@@ -183,6 +183,7 @@ async def shuffle(ctx):
     Shuffle for list for tables
     """
     player, chan, club = await get_vars(ctx)
+    idle, play = getLobby(club)
     
     """
     users = [i for i in tourneyList.items()]
@@ -214,18 +215,6 @@ async def list(ctx):
     """
     
     player, chan, club = await get_vars(ctx)
-    # headers = {
-    #     "Host": "tenhou.net",
-    #     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0"
-    # }
-    # ret = requests.post("https://tenhou.net/cs/edit/cmd_get_players.cgi",data = {"L":club.tenhou_room}, headers=headers)
-
-    # if ret.status_code != 200:
-    #     await chan.send("Could not get list :<")
-    # ret = ret.text
-
-    # idle = urllib.parse.unquote(ret.split("&")[0][5:]).split(",")
-    # play = urllib.parse.unquote(ret.split("&")[1][5:]).split(",")
         
     idle, play = getLobby(club)
 
