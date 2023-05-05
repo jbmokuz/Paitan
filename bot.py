@@ -121,12 +121,39 @@ async def get_vars(ctx):
 #         rolls.append(random.randint(1,6))
 #     await chan.send(f"{rolls}\n{sum(rolls)}")
 
+picked = set([])
+
+@bot.command()
+@has_permissions(administrator=True)
+async def come_on_down(ctx):
+    """
+    ???????
+    """
+    player, chan, club = await get_vars(ctx)
+    standings = getStandings(club.club_id, True, True)
+    pick = []
+    for i,n in standings:
+        if n in picked:
+            continue
+        pick += [n]*i
+    if pick == []:
+        await chan.send("```Every one has already been picked```")
+        return
+    lucky_player = random.choice(pick)
+    picked.add(lucky_player)
+    ret = "```"
+    ret += f"{lucky_player} COME ON DOWN!"
+    ret += "```"
+    await chan.send(ret)
+
+
 
 #################
 
 
-tourneyList = {str(i):str(i)+"san" for i in range(18)}
-tourneyList["マージャン"] = "麻雀"
+#tourneyList = {str(i):str(i)+"san" for i in range(18)}
+#tourneyList["マージャン"] = "麻雀"
+tourneyList = {}
 
 # @bot.command()
 # async def join(ctx):
@@ -204,11 +231,12 @@ async def shuffle(ctx):
         if check(tables):
             break
 
-    ret = ""
+    ret = "```\n"
     for i,t in enumerate(tables):
         ret += f"**Table {i+1}:** "
         ret += str(" ".join(t))
         ret += "\n"
+    ret += "```"
     await chan.send(ret)
 
     
